@@ -1,19 +1,12 @@
 // NAVIGATION
 export const NAV_LINKS = [
-  { href: '/', key: 'guide', label: 'Guide' },
-  { href: '/', key: 'sponsor_this_project', label: 'Sponsor this project'},
-  { href: '/', key: 'pricing ', label: 'Pricing ' },
-  { href: '/', key: 'blog', label: 'Blog' },
+  { href: '/api-guide', key: 'guide', label: 'Guide' },
+  { href: '/sponsor', key: 'sponsor_this_project', label: 'Sponsor this project'},
+  { href: '/pricing', key: 'pricing ', label: 'Pricing ' },
+  { href: '/blog', key: 'blog', label: 'Blog' },
   { href: '/', key: 'sign_up', label: 'Sign up' },
 ];
 
-// CAMP SECTION
-export const PEOPLE_URL = [
-  '/person-1.png',
-  '/person-2.png',
-  '/person-3.png',
-  '/person-4.png',
-];
 
 // FEATURES SECTION
 export const FEATURES = [
@@ -38,14 +31,18 @@ export const FOOTER_LINKS = [
   {
     title: 'Our links',
     links: [
-      'About AjsonX',
-      'Press Releases',
-      'Environment',
+      { label: 'Guide', url: '/api-guide' },
+      { label: 'Sponsor this project', url: '/sponsor' },
+      { label: 'Pricing', url: '/pricing' },
     ],
   },
   {
     title: 'Some tips',
-    links: ['Climbing AjsonX', 'AjsonX AjsonX', 'AjsonX AjsonX'],
+    links: [
+      { label: 'Climbing AjsonX', url: '/climbing-ajsonx' },
+      { label: 'AjsonX Tips 1', url: '/ajsonx-tips-1' },
+      { label: 'AjsonX Tips 2', url: '/ajsonx-tips-2' },
+    ],
   },
 ];
 
@@ -53,16 +50,13 @@ export const FOOTER_CONTACT_INFO = {
   title: 'Contact Us',
   links: [
     { label: 'Email ', value: 'kpade2000@gmail.com' },
+    { label: 'Tél ', value: '01 95 74 88 84' },
   ],
 };
 
 export const SOCIALS = {
-  title: 'Social media',
   links: [
-    '/facebook.svg',
-    '/instagram.svg',
-    '/twitter.svg',
-    '/youtube.svg',
-    '/wordpress.svg',
+    '/facebook.png',
+    '/linkedin.png',   
   ],
 };

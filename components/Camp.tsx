@@ -24,18 +24,12 @@ const CampSite = ({ backgroundImage, title, subtitle, peopleJoined }: CampProps)
 
 const Camp = () => {
   return (
-    <section className="2xl:max-container relative flex flex-col py-10 lg:mb-2 lg:py-20 xl:mb-20">
+    <section className="2xl:max-container relative flex flex-col py-10 lg:mb-20 xl:mb-20">
       <div className="hide-scrollbar flex h-[340px] w-full items-start justify-start gap-8 overflow-x-auto lg:h-[400px] xl:h-[640px]">
         <CampSite 
           backgroundImage="bg-bg-img-1"
-          title="Free fake and reliable API for testing and prototyping."
+          title=""
           subtitle="Prigen, Pasuruan"
-          peopleJoined="50+ Joined"
-        />
-        <CampSite 
-          backgroundImage="bg-bg-img-2"
-          title="Mountain View Camp"
-          subtitle="Somewhere in the Wilderness"
           peopleJoined="50+ Joined"
         />
       </div>
@@ -48,13 +42,6 @@ const Camp = () => {
           <p className="regular-14 xl:regular-16 mt-5 text-white">
             Hey guys, we're here for you! 😉 We all know that coding isn't always easy, so we want to help you focus on what truly matters—building your application. Use our resources to test your functions effortlessly. Life feels easy when everything flows smoothly! 🚀
           </p>
-          <Image 
-            src="/quote.svg"
-            alt="camp-2"  
-            width={186}
-            height={219}
-            className="camp-quote"
-          />
         </div>
       </div>
     </section>

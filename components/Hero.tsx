@@ -17,15 +17,15 @@ const Hero = () => {
         <span className="px-3 py-2 mt-4 mb-0 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full shadow-md">
           ✅ APIs Already Created & Automatic api with you logic
         </span>
-        <p className="z-10 regular-16 mt-6 text-gray-50 xl:max-w-[520px] text-center mx-4">
+        <p className="z-10 regular-16 mt-6 dark:text-white text-gray-50 xl:max-w-[520px] text-center mx-4">
         AutoJX is a powerful and intuitive tool that simplifies creating and managing structured data. Perfect for testing, prototyping, and demos, saving time and enhancing workflow efficiency.
         </p>
 
         <div className=" z-10 flex flex-col w-full gap-3 justify-center sm:flex-row my-8">
           <Button 
-            type="button" 
-            title="Let's get started now" 
-            variant="px-4 py-3 rounded-full text-white font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition duration-300"
+            href="/dashboard" 
+            title="Go to the dashboard" 
+            variant="px-4 py-3 border-black text-black dark:border-white dark:text-white  border-1 rounded-full  font-semibold hover:from-orange-600 hover:to-pink-600 transition duration-300"
           />
         </div>
       </div>

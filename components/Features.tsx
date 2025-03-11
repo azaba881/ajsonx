@@ -1,18 +1,19 @@
 import { FEATURES } from '@/constants'
 import Image from 'next/image'
 import React from 'react'
+import Button from './Button'
 
 const Features = () => {
   return (
-    <section className="flex-col flexCenter overflow-hidden bg-feature-bg bg-center bg-no-repeat py-24 pt-4">
+    <section className="flex-col flexCenter overflow-hidden bg-center bg-no-repeat mb-20">
       <div className="max-container padding-container relative w-full flex justify-end">
         <div className="z-20 flex w-full flex-col justify-center lg:w-full">
           <div className='relative'>
-            <p className="z-10 regular-16 mt-6 text-gray-50 xl:max-w-[520px] text-center mx-4">
+            <p className="z-10 regular-16 mt-6 dark:text-white text-gray-50 xl:max-w-[520px] text-center mx-4">
               Here are the API solutions we offer : Select the kind of api you want to build and use and have a fun.
             </p>          
           </div>
-          <ul className="mt-10 grid gap-10 md:grid-cols-2 lg:mg-20 lg:gap-20 cursor-pointer">
+          <ul className="mt-10 dark:text-white grid gap-10 md:grid-cols-2 lg:mg-20 lg:gap-20 cursor-pointer">
             {FEATURES.map((feature) => (
               <FeatureItem    
                 key={feature.title}   
@@ -35,10 +36,10 @@ type FeatureItem = {
 const FeatureItem = ({ title, description }: FeatureItem) => {
   return (
     <li className="flex w-full flex-1 flex-col items-start py-4 px-2 rounded-[20px] border-[1.5px] border-image">
-      <h2 className="bold-20 lg:bold-32 mt-5 capitalize text-gray-50">
+      <h2 className="bold-20 lg:bold-32 mt-5 capitalize dark:text-white text-gray-50">
         {title}
       </h2>
-      <p className="regular-16 mt-5 text-gray-50 lg:mt-[30px] lg:bg-none">
+      <p className="regular-16 mt-5 dark:text-white text-gray-50 lg:mt-[30px] lg:bg-none">
         {description}
       </p>
     </li>

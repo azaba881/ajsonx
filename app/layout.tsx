@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import './globals.css'
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { ThemeProvider } from 'next-themes';
+import ConditionalLayout from '@/components/ConditionalLayout';
 
 export const metadata: Metadata = {
   title: 'AjsonX | Generate your API',
@@ -17,12 +19,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Navbar />
-        <main className="relative overflow-hidden">
-          {children}
-        </main>
-        <Footer />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <ConditionalLayout>{children}</ConditionalLayout>
+        </ThemeProvider>
       </body>
-    </html>
+    </html>  
   )
 }

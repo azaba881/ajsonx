@@ -1,9 +1,17 @@
+"use client"
+
+import { useTheme } from "next-themes" // Importez useTheme
 import { NAV_LINKS } from "@/constants"
 import Image from "next/image"
 import Link from "next/link"
-import Button from "./Button"
+import { Globe, Moon, Sun, User } from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu"
+import { Button } from "./ui/button"
 
 const Navbar = () => {
+  // Utilisez le hook useTheme pour obtenir le thème actuel et la fonction pour le changer
+  const { theme, setTheme } = useTheme()
+
   return (
     <nav className="flexBetween max-container padding-container relative z-30 py-5 mt-4">
       <Link href="/">
@@ -19,13 +27,37 @@ const Navbar = () => {
       </ul>
 
       <div className="lg:flexCenter hidden">
-        
-        <Button    
-          type="button"
-          title="Login"  
-          icon="/user.svg"
-          variant="px-4 py-2 rounded-full text-white font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 transition duration-300"
-        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <Globe className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => {}}>English</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {}}>Français</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {}}>Español</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Bouton pour basculer entre les thèmes sombre et clair */}
+        <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+          <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="rounded-full border-[1.5px] dark:border-white mx-2 dark:bg-gray-50 bg-white border-black">
+              <User className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem><Link href="/">Sign up</Link></DropdownMenuItem>
+            <DropdownMenuItem><Link href="/">Sign in</Link></DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <Image 

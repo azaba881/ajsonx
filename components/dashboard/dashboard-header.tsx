@@ -1,7 +1,7 @@
 "use client"
 
 import { useTheme } from "next-themes"
-import { Moon, Sun, Globe, Bell, ChevronDown } from "lucide-react"
+import { Moon, Sun, Globe, ChevronDown } from "lucide-react"
 import { useAuth } from "@/components/auth/auth-context"
 
 import { Button } from "@/components/ui/button"
@@ -22,7 +22,7 @@ export function DashboardHeader() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
-                <Globe className="h-5 w-5" />
+                <Globe className="h-5 w-5" /> 
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -38,10 +38,6 @@ export function DashboardHeader() {
             <span className="sr-only">Toggle theme</span>
           </Button>
 
-          <Button variant="ghost" size="icon">
-            <Bell className="h-5 w-5" />
-          </Button>
-
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -55,8 +51,6 @@ export function DashboardHeader() {
                         .join("")}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="hidden md:inline-block">{user.name}</span>
-                  <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

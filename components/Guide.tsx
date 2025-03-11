@@ -5,7 +5,7 @@ import Button from './Button'
 const Guide = () => {
   return (
     <section className="flexCenter flex-col">
-      <div className=" text-center padding-container max-container w-full pb-8">
+      {/* <div className=" text-center padding-container max-container w-full pb-8">
         <p className="uppercase regular-18 -mt-1 mb-3 text-gray-50">
           Because you have to go fast 🚀
         </p>
@@ -20,10 +20,10 @@ const Guide = () => {
             />
           </div>
         </div>
-      </div>
+      </div> */}
       
       <div className="mb-8 max-w-3xl mx-auto text-center">
-        <h2 className="text-2xl font-bold mb-4">Frequently Asked Questions</h2>
+        <h2 className="text-4xl font-bold tracking-tight mb-4">Frequently Asked Questions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left mt-8">
           <div>
             <h3 className="font-semibold mb-2">What's your typical response time?</h3>

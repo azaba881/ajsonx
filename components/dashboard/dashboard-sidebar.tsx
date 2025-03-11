@@ -47,7 +47,7 @@ export function DashboardSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="border-b p-4">
-        <Link href="/dashboard" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           {/* <Database className="h-6 w-6 text-primary" />
           <span className="text-xl font-bold">AjsonX</span> */}
           <Image src="/logo-dark.png"
@@ -60,7 +60,7 @@ export function DashboardSidebar() {
           alt="camp"
           width={100}  
           height={100}
-          className="w-auto dark:hidden"
+          className="dark:hidden"
           />
         </Link>
       </SidebarHeader>  

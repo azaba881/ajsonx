@@ -32,8 +32,8 @@ export const FOOTER_LINKS = [
     title: 'Our links',
     links: [
       { label: 'Guide', url: '/api-guide' },
-      { label: 'Sponsor this project', url: '/sponsor' },
       { label: 'Pricing', url: '/pricing' },
+      { label: 'Contact us', url: '/contact' },
     ],
   },
   {

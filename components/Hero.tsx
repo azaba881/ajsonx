@@ -13,7 +13,7 @@ const Hero = () => {
           height={300}
           className="absolute left-[-5px] top-[-30px] w-50 lg:w-[300px]"
         />
-        <h1 className="bold-52 lg:bold-60 z-10 text-center">⚡ Your Auto-Generated APIs, Ready to Use! 🚀</h1>
+        <h1 className="bold-52 lg:bold-60 z-10 text-center mb-2">⚡ Your Auto-Generated APIs, Ready to Use! 🚀</h1>
         <span className="px-3 py-2 mt-4 mb-0 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full shadow-md">
           ✅ APIs Already Created & Automatic api with you logic
         </span>
@@ -21,11 +21,11 @@ const Hero = () => {
         AutoJX is a powerful and intuitive tool that simplifies creating and managing structured data. Perfect for testing, prototyping, and demos, saving time and enhancing workflow efficiency.
         </p>
 
-        <div className=" z-10 flex flex-col w-full gap-3 justify-center sm:flex-row my-8">
+        <div className=" z-10 flex flex-col w-full gap-3 justify-center sm:flex-row my-5">
           <Button 
             href="/dashboard" 
-            title="Go to the dashboard" 
-            variant="px-4 py-3 border-black text-black dark:border-white dark:text-white  border-1 rounded-full  font-semibold hover:from-orange-600 hover:to-pink-600 transition duration-300"
+            title="Let's get started" 
+            variant="mt-2 px-4 py-[10px] text-white bg-gradient-to-r from-orange-500 to-pink-500 rounded-full  font-semibold hover:from-orange-600 hover:to-pink-600 transition duration-300"
           />
         </div>
       </div>

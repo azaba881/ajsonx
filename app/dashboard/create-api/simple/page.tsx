@@ -53,16 +53,17 @@ export default function CreateSimpleApiPage() {
   useEffect(() => {
     const subscription = form.watch((value) => {
       const previewData = {
-        className: value.name,
-        properties: value.fields.reduce(
-          (acc, field) => {
-            if (field.name) {
-              acc[field.name] = field.type
-            }
-            return acc
-          },
-          {} as Record<string, string>,
-        ),
+        className: value.name || "ApiClass",
+        properties:
+          value.fields?.reduce(
+            (acc, field) => {
+              if (field?.name) {
+                acc[field.name] = field.type || "String"
+              }
+              return acc
+            },
+            {} as Record<string, string>,
+          ) || {},
       }
       setPreview(JSON.stringify(previewData, null, 2))
     })

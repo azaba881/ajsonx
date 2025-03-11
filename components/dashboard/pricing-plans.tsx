@@ -11,7 +11,7 @@ const plans = [
     limit: 20,
     features: ["20 API limit", "1,000 requests per day", "Basic API types", "Community support"],
     current: true,
-  },
+  },    
   {
     name: "Premium",
     description: "For growing projects",

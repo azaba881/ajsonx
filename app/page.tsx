@@ -11,7 +11,7 @@ export default function Home() {
       <Camp />
       <Features />
       <Guide />
-      {/* <Contact /> */}
+      <Contact />
     </>
   )
 }

@@ -4,7 +4,7 @@ export const NAV_LINKS = [
   { href: '/sponsor', key: 'sponsor_this_project', label: 'Sponsor this project'},
   { href: '/pricing', key: 'pricing ', label: 'Pricing ' },
   { href: '/blog', key: 'blog', label: 'Blog' },
-  { href: '/', key: 'sign_up', label: 'Sign up' },
+  { href: '/contact', key: 'contact', label: 'Contact us' },
 ];
 
 

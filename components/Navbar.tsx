@@ -54,8 +54,8 @@ const Navbar = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem><Link href="/">Sign up</Link></DropdownMenuItem>
-            <DropdownMenuItem><Link href="/">Sign in</Link></DropdownMenuItem>
+            <DropdownMenuItem><Link href="/sign-up">Sign up</Link></DropdownMenuItem>
+            <DropdownMenuItem><Link href="/sign-in">Sign in</Link></DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

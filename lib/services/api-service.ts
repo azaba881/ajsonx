@@ -1,0 +1,181 @@
+import { prisma } from '../prisma';
+import { ApiType } from '@prisma/client';
+import type { CreateApiInput, CreateEndpointInput, ApiWithEndpoints } from '../types/api';
+
+export class ApiService {
+  static async createApi(userId: string, input: CreateApiInput) {
+    // Vérifier la limite d'APIs de l'utilisateur
+    const user = await prisma.user.findUnique({
+      where: { clerkUserId: userId },
+      include: { plan: true, _count: { select: { apis: true } } }
+    });
+
+    if (!user) {
+      throw new Error('Utilisateur non trouvé');
+    }
+
+    if (user._count.apis >= user.plan.apiLimit) {
+      throw new Error('Limite d\'APIs atteinte pour votre plan');
+    }
+
+    // Créer l'API
+    return prisma.api.create({
+      data: {
+        name: input.name,
+        description: input.description,
+        type: input.type,
+        structure: input.structure,
+        userId: user.id
+      },
+      include: {
+        endpoints: true
+      }
+    });
+  }
+
+  static async getApiById(id: string, userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { clerkUserId: userId }
+    });
+
+    if (!user) {
+      throw new Error('Utilisateur non trouvé');
+    }
+
+    return prisma.api.findFirst({
+      where: {
+        id,
+        userId: user.id
+      },
+      include: {
+        endpoints: true
+      }
+    });
+  }
+
+  static async getUserApis(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { clerkUserId: userId }
+    });
+
+    if (!user) {
+      throw new Error('Utilisateur non trouvé');
+    }
+
+    return prisma.api.findMany({
+      where: {
+        userId: user.id
+      },
+      include: {
+        endpoints: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+  }
+
+  static async updateApi(id: string, userId: string, data: Partial<CreateApiInput>) {
+    const user = await prisma.user.findUnique({
+      where: { clerkUserId: userId }
+    });
+
+    if (!user) {
+      throw new Error('Utilisateur non trouvé');
+    }
+
+    return prisma.api.update({
+      where: {
+        id,
+        userId: user.id
+      },
+      data: {
+        name: data.name,
+        description: data.description,
+        type: data.type,
+        structure: data.structure
+      },
+      include: {
+        endpoints: true
+      }
+    });
+  }
+
+  static async deleteApi(id: string, userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { clerkUserId: userId }
+    });
+
+    if (!user) {
+      throw new Error('Utilisateur non trouvé');
+    }
+
+    return prisma.api.delete({
+      where: {
+        id,
+        userId: user.id
+      }
+    });
+  }
+
+  static async addEndpoint(apiId: string, userId: string, input: CreateEndpointInput) {
+    const user = await prisma.user.findUnique({
+      where: { clerkUserId: userId }
+    });
+
+    if (!user) {
+      throw new Error('Utilisateur non trouvé');
+    }
+
+    // Vérifier que l'API appartient à l'utilisateur
+    const api = await prisma.api.findFirst({
+      where: {
+        id: apiId,
+        userId: user.id
+      }
+    });
+
+    if (!api) {
+      throw new Error('API non trouvée ou accès non autorisé');
+    }
+
+    return prisma.apiEndpoint.create({
+      data: {
+        path: input.path,
+        method: input.method,
+        response: input.response,
+        apiId
+      }
+    });
+  }
+
+  static async deleteEndpoint(endpointId: string, userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { clerkUserId: userId }
+    });
+
+    if (!user) {
+      throw new Error('Utilisateur non trouvé');
+    }
+
+    // Vérifier que l'endpoint appartient à l'utilisateur
+    const endpoint = await prisma.apiEndpoint.findFirst({
+      where: {
+        id: endpointId,
+        api: {
+          userId: user.id
+        }
+      }
+    });
+
+    if (!endpoint) {
+      throw new Error('Endpoint non trouvé ou accès non autorisé');
+    }
+
+    return prisma.apiEndpoint.delete({
+      where: {
+        id: endpointId
+      }
+    });
+  }
+} 

@@ -54,9 +54,9 @@ export const FOOTER_CONTACT_INFO = {
   ],
 };
 
-export const SOCIALS = {
-  links: [
-    '/facebook.png',
-    '/linkedin.png',   
-  ],
-};
+export const SOCIALS = [
+  { name: "Twitter", url: '/images/socials/twitter.svg' },
+  { name: "Instagram", url: '/images/socials/instagram.svg' },
+  { name: "LinkedIn", url: '/images/socials/linkedin.svg' }
+];
+

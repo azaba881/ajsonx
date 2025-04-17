@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import Link from "next/link"
+import { UserButton } from "@clerk/nextjs"
 
 export function DashboardHeader() {
   const { theme, setTheme } = useTheme()
@@ -41,21 +43,10 @@ export function DashboardHeader() {
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.imageUrl} alt={user.name} />
-                    <AvatarFallback>
-                      {user.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
+                <UserButton />  
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuItem><Link href="/dashboard/settings">Settings</Link></DropdownMenuItem>
                 <DropdownMenuItem onClick={signOut}>Logout</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

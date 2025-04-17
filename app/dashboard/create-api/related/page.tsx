@@ -2,203 +2,461 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm, useFieldArray } from "react-hook-form"
-import * as z from "zod"
-import { Plus, X, ArrowRight } from "lucide-react"
+import { useAuth } from "@clerk/nextjs"
+import { toast } from "sonner"
+import Link from "next/link"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Plus, Trash2, ArrowLeft } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+interface Entity {
+  name: string
+  fields: {
+    [key: string]: {
+      type: string
+    }
+  }
+  relations: {
+    [key: string]: {
+      type: "oneToOne" | "oneToMany" | "manyToOne" | "manyToMany"
+      target: string
+    }
+  }
+}
 
-const relationTypes = ["OneToOne", "OneToMany", "ManyToMany"] as const
+interface Field {
+  name: string
+  type: string
+}
 
-const tableSchema = z.object({
-  name: z.string().min(1, "Table name is required"),
-})
-
-const relationSchema = z.object({
-  source: z.string().min(1, "Source table is required"),
-  type: z.enum(relationTypes),
-  target: z.string().min(1, "Target table is required"),
-})
-
-const formSchema = z.object({
-  tables: z.array(tableSchema).min(1, "At least one table is required"),
-  relations: z.array(relationSchema),
-})
+interface Relation {
+  name: string
+  type: "oneToOne" | "oneToMany" | "manyToOne" | "manyToMany"
+  target: string
+}
 
 export default function CreateRelatedApiPage() {
   const router = useRouter()
-  const [step, setStep] = useState(1)
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      tables: [{ name: "" }],
-      relations: [],
-    },
+  const { getToken } = useAuth()
+  const [name, setName] = useState("")
+  const [description, setDescription] = useState("")
+  const [entities, setEntities] = useState<Entity[]>([])
+  const [currentEntity, setCurrentEntity] = useState("")
+  const [currentField, setCurrentField] = useState<Field>({ name: "", type: "string" })
+  const [currentRelation, setCurrentRelation] = useState<Relation>({
+    name: "",
+    type: "oneToOne",
+    target: ""
   })
 
-  const {
-    fields: tables,
-    append: appendTable,
-    remove: removeTable,
-  } = useFieldArray({
-    control: form.control,
-    name: "tables",
-  })
+  const handleAddEntity = () => {
+    if (!currentEntity.trim()) return
+    
+    // Validation du nom de l'entité
+    const entityName = currentEntity.trim()
+    if (entityName.includes(" ")) {
+      toast.error("Le nom de l'entité ne doit pas contenir d'espaces")
+      return
+    }
+    if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(entityName)) {
+      toast.error("Le nom de l'entité doit commencer par une lettre et ne contenir que des lettres et des chiffres")
+      return
+    }
+    if (entities.some(e => e.name === entityName)) {
+      toast.error("Une entité avec ce nom existe déjà")
+      return
+    }
 
-  const {
-    fields: relations,
-    append: appendRelation,
-    remove: removeRelation,
-  } = useFieldArray({
-    control: form.control,
-    name: "relations",
-  })
+    setEntities([
+      ...entities,
+      {
+        name: entityName,
+        fields: {},
+        relations: {}
+      }
+    ])
+    setCurrentEntity("")
+  }
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
-    // Here you would typically send this data to your backend
-    // For now, we'll just log it and redirect
-    router.push("/dashboard")
+  const handleAddField = (entityIndex: number) => {
+    if (!currentField.name.trim()) return
+    
+    // Validation du nom du champ
+    const fieldName = currentField.name.trim()
+    if (fieldName.includes(" ")) {
+      toast.error("Le nom du champ ne doit pas contenir d'espaces")
+      return
+    }
+    if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(fieldName)) {
+      toast.error("Le nom du champ doit commencer par une lettre et ne contenir que des lettres et des chiffres")
+      return
+    }
+    
+    const entity = entities[entityIndex]
+    if (entity.fields[fieldName]) {
+      toast.error("Un champ avec ce nom existe déjà")
+      return
+    }
+
+    const updatedEntities = [...entities]
+    updatedEntities[entityIndex] = {
+      ...entity,
+      fields: {
+        ...entity.fields,
+        [fieldName]: {
+          type: currentField.type.toLowerCase()
+        }
+      }
+    }
+    setEntities(updatedEntities)
+    setCurrentField({ name: "", type: "string" })
+  }
+
+  const handleAddRelation = (entityIndex: number) => {
+    if (!currentRelation.name.trim() || !currentRelation.target) return
+    
+    // Validation du nom de la relation
+    const relationName = currentRelation.name.trim()
+    if (relationName.includes(" ")) {
+      toast.error("Le nom de la relation ne doit pas contenir d'espaces")
+      return
+    }
+    if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(relationName)) {
+      toast.error("Le nom de la relation doit commencer par une lettre et ne contenir que des lettres et des chiffres")
+      return
+    }
+    
+    const entity = entities[entityIndex]
+    if (entity.relations[relationName]) {
+      toast.error("Une relation avec ce nom existe déjà")
+      return
+    }
+    if (currentRelation.target === entity.name) {
+      toast.error("Une entité ne peut pas avoir une relation avec elle-même")
+      return
+    }
+    if (!entities.some(e => e.name === currentRelation.target)) {
+      toast.error("L'entité cible n'existe pas")
+      return
+    }
+
+    const updatedEntities = [...entities]
+    updatedEntities[entityIndex] = {
+      ...entity,
+      relations: {
+        ...entity.relations,
+        [relationName]: {
+          type: currentRelation.type,
+          target: currentRelation.target
+        }
+      }
+    }
+    setEntities(updatedEntities)
+    setCurrentRelation({ name: "", type: "oneToOne", target: "" })
+  }
+
+  const handleRemoveEntity = (index: number) => {
+    const entityName = entities[index].name
+    const updatedEntities = entities.filter((_, i) => i !== index).map(entity => ({
+      ...entity,
+      relations: Object.fromEntries(
+        Object.entries(entity.relations).filter(([_, rel]) => rel.target !== entityName)
+      )
+    }))
+    setEntities(updatedEntities)
+  }
+
+  const handleRemoveField = (entityIndex: number, fieldName: string) => {
+    const updatedEntities = [...entities]
+    const entity = { ...entities[entityIndex] }
+    const { [fieldName]: _, ...remainingFields } = entity.fields
+    entity.fields = remainingFields
+    updatedEntities[entityIndex] = entity
+    setEntities(updatedEntities)
+  }
+
+  const handleRemoveRelation = (entityIndex: number, relationName: string) => {
+    const updatedEntities = [...entities]
+    const entity = { ...entities[entityIndex] }
+    const { [relationName]: _, ...remainingRelations } = entity.relations
+    entity.relations = remainingRelations
+    updatedEntities[entityIndex] = entity
+    setEntities(updatedEntities)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name.trim()) {
+      toast.error("Le nom de l'API est requis")
+      return
+    }
+    if (entities.length === 0) {
+      toast.error("Au moins une entité est requise")
+      return
+    }
+
+    try {
+      const token = await getToken()
+      const response = await fetch("/api/apis", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name,
+          description,
+          type: "RELATIONAL",
+          structure: {
+            entities
+          }
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Erreur lors de la création de l'API")
+      }
+
+      toast.success("API créée avec succès")
+      router.push("/dashboard/api")
+    } catch (error: any) {
+      toast.error(error.message)
+    }
   }
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-6">Create API with Relations</h1>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {step === 1 && (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Step 1: Define Tables</h2>
-              {tables.map((table, index) => (
-                <div key={table.id} className="flex items-center space-x-2 mb-2">
-                  <FormField
-                    control={form.control}
-                    name={`tables.${index}.name`}
-                    render={({ field }) => (
-                      <FormItem className="flex-grow">
-                        <FormControl>
-                          <Input placeholder="Table name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="button" variant="outline" size="icon" onClick={() => removeTable(index)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              <Button type="button" variant="outline" size="sm" onClick={() => appendTable({ name: "" })}>
-                <Plus className="mr-2 h-4 w-4" /> Add Table
-              </Button>
-              <Button type="button" className="ml-2" onClick={() => setStep(2)}>
-                Next <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          )}
+      <div className="flex items-center gap-4 mb-8">
+        <Link
+          href="/dashboard/create-api"
+          className="p-2 hover:bg-gray-100 rounded-full"
+        >
+          <ArrowLeft size={24} />
+        </Link>
+        <h1 className="text-3xl font-bold">Créer une API avec relations</h1>
+      </div>
 
-          {step === 2 && (
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Informations générales</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div>
-              <h2 className="text-xl font-semibold mb-4">Step 2: Define Relations</h2>
-              {relations.map((relation, index) => (
-                <div key={relation.id} className="flex items-end space-x-2 mb-2">
-                  <FormField
-                    control={form.control}
-                    name={`relations.${index}.source`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Source table" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {tables.map((table) => (
-                              <SelectItem key={table.id} value={table.name || `table-${table.id}`}>
-                                {table.name || `Table ${index + 1}`}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name={`relations.${index}.type`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Relation type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {relationTypes.map((type) => (
-                              <SelectItem key={type} value={type}>
-                                {type}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name={`relations.${index}.target`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Target table" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {tables.map((table) => (
-                              <SelectItem key={table.id} value={table.name || `table-${table.id}`}>
-                                {table.name || `Table ${index + 1}`}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="button" variant="outline" size="icon" onClick={() => removeRelation(index)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => appendRelation({ source: "", type: "OneToOne", target: "" })}
-              >
-                <Plus className="mr-2 h-4 w-4" /> Add Relation
-              </Button>
-              <Button type="button" className="ml-2" onClick={() => setStep(1)}>
-                Back
-              </Button>
-              <Button type="submit" className="ml-2">
-                Create APIs
-              </Button>
+              <label className="block text-sm font-medium mb-2">
+                Nom de l'API
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-4 py-2 border rounded-md"
+                placeholder="Mon API"
+                required
+              />
             </div>
-          )}
-        </form>
-      </Form>
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Description
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full px-4 py-2 border rounded-md"
+                placeholder="Description de l'API"
+                rows={3}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Entités</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4 mb-6">
+              <input
+                type="text"
+                value={currentEntity}
+                onChange={(e) => setCurrentEntity(e.target.value)}
+                className="flex-1 px-4 py-2 border rounded-md"
+                placeholder="Nom de l'entité"
+              />
+              <button
+                type="button"
+                onClick={handleAddEntity}
+                className="px-4 py-2 bg-[#EA580C] text-white rounded-md hover:bg-[#C2410C] flex items-center"
+              >
+                <Plus size={16} className="mr-2" />
+                Ajouter
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {entities.map((entity, entityIndex) => (
+                <Card key={entity.name}>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>{entity.name}</CardTitle>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveEntity(entityIndex)}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-full"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      <div>
+                        <h4 className="font-medium mb-4">Champs</h4>
+                        <div className="flex gap-4 mb-4">
+                          <input
+                            type="text"
+                            value={currentField.name}
+                            onChange={(e) => setCurrentField({
+                              ...currentField,
+                              name: e.target.value
+                            })}
+                            className="flex-1 px-4 py-2 border rounded-md"
+                            placeholder="Nom du champ"
+                          />
+                          <select
+                            value={currentField.type}
+                            onChange={(e) => setCurrentField({
+                              ...currentField,
+                              type: e.target.value
+                            })}
+                            className="px-4 py-2 border rounded-md"
+                          >
+                            <option value="string">String</option>
+                            <option value="number">Number</option>
+                            <option value="boolean">Boolean</option>
+                            <option value="date">Date</option>
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => handleAddField(entityIndex)}
+                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center"
+                          >
+                            <Plus size={16} className="mr-2" />
+                            Ajouter
+                          </button>
+                        </div>
+                        <div className="space-y-2">
+                          {Object.entries(entity.fields).map(([fieldName, field]) => (
+                            <div
+                              key={fieldName}
+                              className="flex items-center justify-between p-2 bg-gray-50 rounded-md"
+                            >
+                              <div>
+                                <span className="font-medium">{fieldName}</span>
+                                <span className="text-gray-500 ml-2">{field.type}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveField(entityIndex, fieldName)}
+                                className="p-1 text-red-500 hover:bg-red-50 rounded-full"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="font-medium mb-4">Relations</h4>
+                        <div className="flex gap-4 mb-4">
+                          <input
+                            type="text"
+                            value={currentRelation.name}
+                            onChange={(e) => setCurrentRelation({
+                              ...currentRelation,
+                              name: e.target.value
+                            })}
+                            className="flex-1 px-4 py-2 border rounded-md"
+                            placeholder="Nom de la relation"
+                          />
+                          <select
+                            value={currentRelation.type}
+                            onChange={(e) => setCurrentRelation({
+                              ...currentRelation,
+                              type: e.target.value as any
+                            })}
+                            className="px-4 py-2 border rounded-md"
+                          >
+                            <option value="oneToOne">One to One</option>
+                            <option value="oneToMany">One to Many</option>
+                            <option value="manyToOne">Many to One</option>
+                            <option value="manyToMany">Many to Many</option>
+                          </select>
+                          <select
+                            value={currentRelation.target}
+                            onChange={(e) => setCurrentRelation({
+                              ...currentRelation,
+                              target: e.target.value
+                            })}
+                            className="px-4 py-2 border rounded-md"
+                          >
+                            <option value="">Entité cible</option>
+                            {entities
+                              .filter(e => e.name !== entity.name)
+                              .map(e => (
+                                <option key={e.name} value={e.name}>
+                                  {e.name}
+                                </option>
+                              ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => handleAddRelation(entityIndex)}
+                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center"
+                          >
+                            <Plus size={16} className="mr-2" />
+                            Ajouter
+                          </button>
+                        </div>
+                        <div className="space-y-2">
+                          {Object.entries(entity.relations).map(([relationName, relation]) => (
+                            <div
+                              key={relationName}
+                              className="flex items-center justify-between p-2 bg-gray-50 rounded-md"
+                            >
+                              <div>
+                                <span className="font-medium">{relationName}</span>
+                                <span className="text-gray-500 ml-2">
+                                  {relation.type} → {relation.target}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveRelation(entityIndex, relationName)}
+                                className="p-1 text-red-500 hover:bg-red-50 rounded-full"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            className="px-6 py-2 bg-[#EA580C] text-white rounded-md hover:bg-[#C2410C]"
+          >
+            Créer l'API
+          </button>
+        </div>
+      </form>
     </div>
   )
 }

@@ -1,196 +1,199 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm, useFieldArray } from "react-hook-form"
-import * as z from "zod"
-import { Plus, X } from "lucide-react"
+import { useAuth } from "@clerk/nextjs"
+import { toast } from "sonner"
+import Link from "next/link"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Plus, Trash2 } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-
-const fieldTypes = ["String", "Number", "Boolean", "Date", "Array", "Object"] as const
-
-const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "API name must be at least 2 characters.",
-  }),
-  description: z.string().optional(),
-  fields: z
-    .array(
-      z.object({
-        name: z.string().min(1, "Field name is required"),
-        type: z.enum(fieldTypes),
-        example: z.string().optional(),
-      }),
-    )
-    .min(1, "At least one field is required"),
-})
+interface Field {
+  name: string
+  type: string
+}
 
 export default function CreateSimpleApiPage() {
   const router = useRouter()
-  const [preview, setPreview] = useState<string>("")
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      fields: [{ name: "", type: "String", example: "" }],
-    },
+  const { getToken } = useAuth()
+  const [isLoading, setIsLoading] = useState(false)
+  const [apiData, setApiData] = useState({
+    name: "",
+    description: "",
+    fields: [{ name: "", type: "string" }] as Field[]
   })
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "fields",
-  })
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
 
-  useEffect(() => {
-    const subscription = form.watch((value) => {
-      const previewData = {
-        className: value.name || "ApiClass",
-        properties:
-          value.fields?.reduce(
-            (acc, field) => {
-              if (field?.name) {
-                acc[field.name] = field.type || "String"
-              }
-              return acc
-            },
-            {} as Record<string, string>,
-          ) || {},
+    try {
+      const token = await getToken()
+      const response = await fetch("/api/apis", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: apiData.name,
+          description: apiData.description,
+          type: "SIMPLE",
+          structure: {
+            fields: apiData.fields.reduce((acc, field) => ({
+              ...acc,
+              [field.name]: { type: field.type }
+            }), {})
+          }
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Erreur lors de la création de l'API")
       }
-      setPreview(JSON.stringify(previewData, null, 2))
-    })
-    return () => subscription.unsubscribe()
-  }, [form.watch])
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
-    // Here you would typically send this data to your backend
-    // For now, we'll just log it and redirect
-    router.push("/dashboard")
+      const data = await response.json()
+      toast.success("API créée avec succès")
+      router.push("/dashboard/api")
+    } catch (error: any) {
+      toast.error(error.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const addField = () => {
+    setApiData(prev => ({
+      ...prev,
+      fields: [...prev.fields, { name: "", type: "string" }]
+    }))
+  }
+
+  const removeField = (index: number) => {
+    setApiData(prev => ({
+      ...prev,
+      fields: prev.fields.filter((_, i) => i !== index)
+    }))
+  }
+
+  const updateField = (index: number, field: Partial<Field>) => {
+    setApiData(prev => ({
+      ...prev,
+      fields: prev.fields.map((f, i) => i === index ? { ...f, ...field } : f)
+    }))
   }
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-6">Create Simple API</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>API Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter API name" {...field} />
-                  </FormControl>
-                  <FormDescription>This is the name of your API.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Describe your API" className="resize-none" {...field} />
-                  </FormControl>
-                  <FormDescription>A brief description of what your API does.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div>
-              <label className="text-sm font-medium">API Fields</label>
-              {fields.map((field, index) => (
-                <div key={field.id} className="flex items-end space-x-2 mt-2">
-                  <FormField
-                    control={form.control}
-                    name={`fields.${index}.name`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input placeholder="Field name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name={`fields.${index}.type`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {fieldTypes.map((type) => (
-                              <SelectItem key={type} value={type}>
-                                {type}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name={`fields.${index}.example`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input placeholder="Example value" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="button" variant="outline" size="icon" onClick={() => remove(index)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={() => append({ name: "", type: "String", example: "" })}
-              >
-                <Plus className="mr-2 h-4 w-4" /> Add Field
-              </Button>
-            </div>
-            <Button type="submit">Create API</Button>
-          </form>
-        </Form>
-        <Card>
-          <CardHeader>
-            <CardTitle>API Preview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <pre className="bg-muted p-4 rounded-md overflow-auto">
-              <code>{preview}</code>
-            </pre>
-          </CardContent>
-        </Card>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Créer une API Simple</h1>
+        <Link
+          href="/dashboard/create-api"
+          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+        >
+          Retour
+        </Link>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Configuration de l'API</CardTitle>
+          <CardDescription>
+            Définissez les champs de votre API simple
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Nom de l'API
+              </label>
+              <input
+                type="text"
+                value={apiData.name}
+                onChange={(e) => setApiData({ ...apiData, name: e.target.value })}
+                className="w-full px-4 py-2 border rounded-md"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Description
+              </label>
+              <textarea
+                value={apiData.description}
+                onChange={(e) => setApiData({ ...apiData, description: e.target.value })}
+                className="w-full px-4 py-2 border rounded-md"
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <label className="block text-sm font-medium">
+                  Champs
+                </label>
+                <button
+                  type="button"
+                  onClick={addField}
+                  className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center"
+                >
+                  <Plus size={16} className="mr-1" />
+                  Ajouter un champ
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {apiData.fields.map((field, index) => (
+                  <div key={index} className="flex gap-4 items-start">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={field.name}
+                        onChange={(e) => updateField(index, { name: e.target.value })}
+                        className="w-full px-4 py-2 border rounded-md"
+                        placeholder="Nom du champ"
+                        required
+                      />
+                    </div>
+                    <div className="w-32">
+                      <select
+                        value={field.type}
+                        onChange={(e) => updateField(index, { type: e.target.value })}
+                        className="w-full px-4 py-2 border rounded-md"
+                      >
+                        <option value="string">String</option>
+                        <option value="number">Number</option>
+                        <option value="boolean">Boolean</option>
+                        <option value="date">Date</option>
+                      </select>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeField(index)}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-full"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-6 py-2 bg-[#EA580C] text-white rounded-md hover:bg-[#C2410C] disabled:opacity-50"
+              >
+                {isLoading ? "Création en cours..." : "Créer l'API"}
+              </button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   )
 }

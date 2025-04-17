@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Switch } from "@/components/ui/switch"
+import { useUser } from "@clerk/nextjs"
+import Image from "next/image"
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -27,11 +28,12 @@ const formSchema = z.object({
 })
 
 export function SettingsForm() {
+  const { user } = useUser()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "Paddy Nusantsetrou",
-      email: "paddy@example.com",
+      name: user?.fullName || "",
+      email: user?.emailAddresses[0].emailAddress || "",
       bio: "",
       language: "english",
       emailNotifications: true,
@@ -46,7 +48,7 @@ export function SettingsForm() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="flex-1">
         <CardHeader>
           <CardTitle>Profile Settings</CardTitle>
           <CardDescription>Update your personal information</CardDescription>
@@ -92,36 +94,14 @@ export function SettingsForm() {
                     <FormMessage />
                   </FormItem>
                 )}
-              />
-              <FormField
-                control={form.control}
-                name="language"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Language</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a language" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="english">English</SelectItem>
-                        <SelectItem value="french">French</SelectItem>
-                        <SelectItem value="spanish">Spanish</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              />              
             </CardContent>
             <CardFooter>
               <Button type="submit">Save Changes</Button>
             </CardFooter>
           </form>
         </Form>
-      </Card>
+      </Card>      
     </div>
   )
 }

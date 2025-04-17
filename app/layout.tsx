@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
 
 import './globals.css'
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import { ThemeProvider } from 'next-themes';
 import ConditionalLayout from '@/components/ConditionalLayout';
+import { ClerkProvider } from '@clerk/nextjs';
 
 export const metadata: Metadata = {
   title: 'AjsonX | Generate your API',
@@ -17,12 +16,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <ConditionalLayout>{children}</ConditionalLayout>
-        </ThemeProvider>
-      </body>
-    </html>  
+    <ClerkProvider>
+      <html lang="en">
+        <body>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <ConditionalLayout>{children}</ConditionalLayout>
+          </ThemeProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }

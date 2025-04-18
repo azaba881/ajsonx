@@ -218,7 +218,7 @@ export default function CreateRelatedApiPage() {
       }
 
       toast.success("API créée avec succès")
-      router.push("/dashboard/api")
+      router.push("/dashboard")
     } catch (error: any) {
       toast.error(error.message)
     }

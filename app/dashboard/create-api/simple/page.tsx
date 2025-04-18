@@ -55,7 +55,7 @@ export default function CreateSimpleApiPage() {
 
       const data = await response.json()
       toast.success("API créée avec succès")
-      router.push("/dashboard/api")
+      router.push("/dashboard")
     } catch (error: any) {
       toast.error(error.message)
     } finally {

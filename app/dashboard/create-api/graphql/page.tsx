@@ -58,7 +58,7 @@ export default function CreateGraphqlApiPage() {
 
       const data = await response.json();
       toast.success('API GraphQL créée avec succès');
-      router.push('/dashboard/api');
+      router.push('/dashboard');
     } catch (error: any) {
       toast.error(error.message);
     } finally {

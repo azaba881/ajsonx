@@ -8,11 +8,17 @@ import Link from "next/link"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Plus, Search, Filter } from "lucide-react"
 
+interface ApiStructure {
+  fields?: Record<string, { type: string }>
+  types?: Record<string, { fields: Record<string, { type: string }> }>
+  schema?: string
+}
+
 interface Api {
   id: string
   name: string
   description: string
-  type: "SIMPLE" | "RELATIONAL"
+  type: 'SIMPLE' | 'GRAPHQL' | 'RELATIONAL';
   endpoints: Array<{
     id: string
     path: string
@@ -128,6 +134,7 @@ export default function ApiDashboardPage() {
             <option value="ALL">Tous les types</option>
             <option value="SIMPLE">API Simple</option>
             <option value="RELATIONAL">API Relationnelle</option>
+            <option value="GRAPHQL">API GraphQL</option>
           </select>
         </div>
       </div>

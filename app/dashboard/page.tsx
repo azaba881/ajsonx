@@ -6,7 +6,7 @@ import { useAuth } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Database, GitBranch, Search, AlertCircle, Share2 } from "lucide-react";
+import { Database, GitBranch, Search, AlertCircle, Share2, Trash, Eye } from "lucide-react";
 
 interface ApiStructure {
   fields?: Record<string, { type: string }>
@@ -105,11 +105,11 @@ export default function DashboardPage() {
   const getApiIcon = (type: Api['type']) => {
     switch (type) {
       case 'SIMPLE':
-        return <Database className="w-4 h-4" />;
+        return <Database className="w-6 h-6" />;
       case 'RELATIONAL':
-        return <GitBranch className="w-4 h-4" />;
+        return <GitBranch className="w-6 h-6" />;
       case 'GRAPHQL':
-        return <Share2 className="w-4 h-4" />;
+        return <Share2 className="w-6 h-6" />;
       default:
         return <Database className="text-[#EA580C]" />;
     }
@@ -144,6 +144,29 @@ export default function DashboardPage() {
         </div>
       </div>
     );
+  }
+
+  const handleDeleteApi = async (apiId: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cette API ?")) return
+
+    try {
+      const token = await getToken()
+      const response = await fetch(`/api/apis/${apiId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error("Erreur lors de la suppression de l'API")
+      }
+
+      setApis(apis.filter(api => api.id !== apiId))
+      toast.success("API supprimée avec succès")
+    } catch (error: any) {
+      toast.error(error.message)
+    }
   }
 
   return (
@@ -188,7 +211,7 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold">API Management</h2>
             <Link
               href="/dashboard/create-api"
-              className="px-4 py-2 bg-[#EA580C] text-white rounded-md hover:bg-[#C2410C]"
+              className="px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-lg hover:bg-[#C2410C]"
             >
               Create New API
             </Link>
@@ -203,13 +226,13 @@ export default function DashboardPage() {
                 placeholder="Search APIs..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#EA580C] focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 rounded-md"
               />
             </div>
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#EA580C] focus:border-transparent"
+              className="px-4 py-2 border rounded-md"
             >
               <option value="all">All Types</option>
               {apiTypeOptions.map((option) => (
@@ -259,33 +282,44 @@ export default function DashboardPage() {
                   Create New API
                 </Link>
               )}
-            </div>
+            </div>  
           ) : (
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
               {filteredApis.map((api) => (
-                <Card key={api.id} className="hover:shadow-lg transition-shadow">
+                <Card key={api.id} className="hover:shadow-lg transition-shadow hover:border-orange-400/20">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {getApiIcon(api.type)}
                         <div>
                           <CardTitle className="text-base">{api.name}</CardTitle>
-                          <CardDescription>{getApiTypeName(api.type)}</CardDescription>
+                          <CardDescription className="text-xs py-1 px-2 mt-2 bg-primary/20 rounded-md">{getApiTypeName(api.type)}</CardDescription>
                         </div>
                       </div>
-                      <Link
-                        href={`/dashboard/api/${api.id}`}
-                        className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-                      >
-                        View API
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleDeleteApi(api.id)}
+                          className="p-2 text-sm bg-red-400 text-white rounded-full"
+                        >
+                          <Trash className="w-4 h-4" />
+                        </button>
+                        <Link
+                            href={`/dashboard/api/${api.id}`}
+                            className="p-2 text-sm bg-blue-400 text-white rounded-full hover:bg-gray-200"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Link>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex justify-between items-center text-sm text-gray-500">
-                      <span>{api.endpoints?.length || 0} endpoints</span>
+                    <div className="flex justify-between items-center text-sm text-gray-500">                   
+                      <div>
+                        <span className='mb-2'>{api.endpoints?.length || 0} endpoints</span><br />
+                        <span> 0 fakes data</span>
+                      </div>
                       <span>Created {new Date(api.createdAt).toLocaleDateString()}</span>
-                    </div>
+                    </div>                    
                   </CardContent>
                 </Card>
               ))}

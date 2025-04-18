@@ -7,8 +7,11 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 const ApiType = {
   SIMPLE: 'SIMPLE',
-  RELATIONAL: 'RELATIONAL'
+  RELATIONAL: 'RELATIONAL',
+  GRAPHQL: 'GRAPHQL'
 } as const;
+
+type ApiType = 'SIMPLE' | 'RELATIONAL' | 'GRAPHQL';
 
 export async function GET() {
   try {
@@ -26,7 +29,7 @@ export async function GET() {
   } catch (error: any) {
     console.error('Erreur lors de la récupération des APIs:', error);
     return NextResponse.json(
-      { error: 'Erreur serveur' },
+      { error: 'Erreur serveur' },  
       { status: 500 }
     );
   }

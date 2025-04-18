@@ -31,6 +31,7 @@ model User {
   id          String    @id @default(uuid())
   clerkUserId String    @unique
   planId      Int       @default(1)
+  bio         String?   @db.Text
   plan        Plan      @relation(fields: [planId], references: [id])
   apis        Api[]
   createdAt   DateTime  @default(now())

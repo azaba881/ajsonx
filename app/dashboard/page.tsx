@@ -31,7 +31,7 @@ interface Api {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { getToken, userId } = useAuth();
+  const { getToken, userId, isLoaded } = useAuth();
   const [apis, setApis] = useState<Api[]>([]);
   const [filteredApis, setFilteredApis] = useState<Api[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,47 +40,55 @@ export default function DashboardPage() {
   const [selectedType, setSelectedType] = useState<string>('all');
 
   useEffect(() => {
-    if (userId) {
-      fetchApis();
+    if (isLoaded && userId) {
+      const initializeData = async () => {
+        try {
+          const token = await getToken();
+          
+          // Synchroniser l'utilisateur
+          const syncResponse = await fetch('/api/sync-user', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (!syncResponse.ok) {
+            const errorData = await syncResponse.json();
+            throw new Error(errorData.error || 'Erreur lors de la synchronisation');
+          }
+
+          // Charger les APIs
+          const apisResponse = await fetch('/api/apis', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (!apisResponse.ok) {
+            const errorData = await apisResponse.json();
+            throw new Error(errorData.error || 'Erreur lors de la récupération des APIs');
+          }
+
+          const data = await apisResponse.json();
+          setApis(data);
+          setFilteredApis(data);
+        } catch (error: any) {
+          console.error('Erreur:', error);
+          setError(error.message);
+          toast.error(error.message);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      initializeData();
     }
-  }, [userId]);
+  }, [isLoaded, userId]);
 
   useEffect(() => {
     filterApis();
   }, [searchTerm, selectedType, apis]);
-
-  const fetchApis = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const token = await getToken();
-      
-      if (!token) {
-        throw new Error('Non authentifié');
-      }
-
-      const response = await fetch('/api/apis', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erreur lors de la récupération des APIs');
-      }
-
-      const data = await response.json();
-      setApis(data);
-      setFilteredApis(data);
-    } catch (error: any) {
-      console.error('Erreur:', error);
-      setError(error.message);
-      toast.error(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const filterApis = () => {
     let filtered = [...apis];
@@ -257,7 +265,11 @@ export default function DashboardPage() {
               <h3 className="mt-2 text-sm font-medium text-gray-900">Erreur</h3>
               <p className="mt-1 text-sm text-gray-500">{error}</p>
               <button
-                onClick={fetchApis}
+                onClick={() => {
+                  setIsLoading(true);
+                  setError(null);
+                  filterApis();
+                }}
                 className="mt-4 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
               >
                 Réessayer

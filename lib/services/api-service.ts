@@ -1,20 +1,23 @@
 import { prisma } from '../prisma';
 import { ApiType } from '@prisma/client';
 import type { CreateApiInput, CreateEndpointInput, ApiWithEndpoints } from '../types/api';
+import { syncClerkUser } from '../clerk-sync';
 
 export class ApiService {
   static async createApi(userId: string, input: CreateApiInput) {
-    // Vérifier la limite d'APIs de l'utilisateur
-    const user = await prisma.user.findUnique({
-      where: { clerkUserId: userId },
-      include: { plan: true, _count: { select: { apis: true } } }
-    });
-
+    // Synchroniser l'utilisateur
+    const user = await syncClerkUser();
+    
     if (!user) {
       throw new Error('Utilisateur non trouvé');
     }
 
-    if (user._count.apis >= user.plan.apiLimit) {
+    // Vérifier la limite d'APIs
+    const apiCount = await prisma.api.count({
+      where: { userId: user.id }
+    });
+
+    if (apiCount >= user.plan.apiLimit) {
       throw new Error('Limite d\'APIs atteinte pour votre plan');
     }
 

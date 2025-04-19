@@ -2,11 +2,9 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { ApiService } from '@/lib/services/api-service';
 import type { CreateApiInput } from '@/lib/types/api';
-import { PrismaClient, ApiType } from "@prisma/client";
+import { ApiType } from '@prisma/client';
 
-const prisma = new PrismaClient();
-
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await auth();
     
@@ -17,12 +15,12 @@ export async function GET() {
       );
     }
 
-    const apis = await ApiService.getUserApis(session.userId);
+    const apis = await ApiService.getApis(session.userId);
     return NextResponse.json(apis);
   } catch (error: any) {
     console.error('Erreur lors de la récupération des APIs:', error);
     return NextResponse.json(
-      { error: 'Erreur serveur' },  
+      { error: error.message || 'Erreur serveur' },
       { status: 500 }
     );
   }
@@ -41,29 +39,32 @@ export async function POST(request: Request) {
 
     const body = await request.json() as CreateApiInput;
     
-    // Validation du type d'API
-    const normalizedType = body.type.toUpperCase();
-    if (!normalizedType || !Object.values(ApiType).includes(normalizedType as ApiType)) {
+    // Validation basique
+    if (!body.name || !body.type || !body.structure) {
       return NextResponse.json(
-        { error: `Type d'API invalide. Les types valides sont: ${Object.values(ApiType).join(", ")}` },
+        { error: 'Données invalides' },
         { status: 400 }
       );
     }
 
-    // Normalisation du type
-    body.type = normalizedType as ApiType;
-
-    // Validation de la structure selon le type
-    if (body.type === ApiType.RELATIONAL) {
-      if (!body.structure?.entities || !Array.isArray(body.structure.entities)) {
-        return NextResponse.json(
-          { error: "La structure doit contenir un tableau d'entités pour une API relationnelle" },
-          { status: 400 }
-        );
-      }
+    // Validation du type d'API
+    const validTypes = Object.values(ApiType);
+    if (!validTypes.includes(body.type as ApiType)) {
+      return NextResponse.json(
+        { error: 'Type d\'API invalide' },
+        { status: 400 }
+      );
     }
 
-    const api = await ApiService.createApi(session.userId, body);
+    // Validation de la structure selon le type
+    if (body.type === ApiType.RELATIONAL && (!body.structure.entities || Object.keys(body.structure.entities).length === 0)) {
+      return NextResponse.json(
+        { error: 'Structure invalide pour une API relationnelle' },
+        { status: 400 }
+      );
+    }
+
+    const api = await ApiService.createApi(body, session.userId);
     return NextResponse.json(api, { status: 201 });
   } catch (error: any) {
     console.error('Erreur lors de la création de l\'API:', error);

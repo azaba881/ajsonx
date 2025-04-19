@@ -1,14 +1,10 @@
 import { ApiType } from '@prisma/client';
 
 export interface ApiStructure {
-  fields?: {
-    [key: string]: {
-      type: string;
-      required?: boolean;
-      description?: string;
-      example?: any;
-    };
-  };
+  [key: string]: any;
+  fields?: Record<string, { type: string }>;
+  types?: Record<string, { fields: Record<string, { type: string }> }>;
+  entities?: Record<string, { fields: Record<string, { type: string }> }>;
   relations?: {
     [key: string]: {
       type: string;
@@ -16,26 +12,10 @@ export interface ApiStructure {
       description?: string;
     };
   };
-  entities?: Array<{
-    name: string;
-    fields: {
-      [key: string]: {
-        type: string;
-      };
-    };
-    relations: {
-      [key: string]: {
-        type: string;
-        target: string;
-      };
-    };
-  }>;
 }
 
 export interface ApiResponse {
-  status: number;
-  data: any;
-  message?: string;
+  [key: string]: any;
 }
 
 export interface CreateApiInput {
@@ -47,8 +27,8 @@ export interface CreateApiInput {
 
 export interface CreateEndpointInput {
   path: string;
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  response: ApiResponse;
+  method: string;
+  response: any;
 }
 
 export interface ApiWithEndpoints {

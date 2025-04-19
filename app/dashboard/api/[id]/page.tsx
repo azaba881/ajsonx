@@ -1,13 +1,21 @@
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Database, Plus, Trash2, Edit2, Copy } from "lucide-react"
-import ApiClient from "./client"
+import { Metadata } from "next";
+import ApiPageClient from "./api-page";
 
-interface Props {
-  params: {
-    id: string
-  }
+export const metadata: Metadata = {
+  title: "Détails de l'API",
+  description: "Gérez et configurez votre API",
+};
+
+// Cette fonction est nécessaire pour les routes dynamiques dans Next.js 13+
+export async function generateStaticParams() {
+  return [];
 }
 
-export default function ApiDetailPage({ params }: Props) {
-  return <ApiClient id={params.id} />
+interface PageContext {
+  params: Promise<{ id: string }>;
+}
+
+export default async function Page({ params }: PageContext) {
+  const resolvedParams = await params;
+  return <ApiPageClient id={resolvedParams.id} />;
 }

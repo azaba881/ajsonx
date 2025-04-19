@@ -1,22 +1,47 @@
-import { prisma } from '../lib/prisma';
+import { prisma } from '@/lib/prisma';
 
 async function main() {
   try {
-    // Créer le plan gratuit
-    await prisma.plan.upsert({
-      where: { id: 1 },
-      update: {},
-      create: {
-        id: 1,
-        name: 'Gratuit',
-        apiLimit: 5,
-        price: 2000,
-        features: {
-          maxApis: 5,
-          maxRequests: 1000,
-          support: 'Email',
+    // Supprimer tous les plans existants
+    await prisma.plan.deleteMany();
+
+    // Créer les plans
+    await prisma.plan.createMany({
+      data: [
+        {
+          name: 'Free',
+          apiLimit: 1,
+          price: 0,
+          features: [
+            'Jusqu\'à 1 API',
+            '1000 requêtes/mois',
+            'Support par email'
+          ]
         },
-      },
+        {
+          name: 'Pro',
+          apiLimit: 5,
+          price: 2000,
+          features: [
+            'Jusqu\'à 5 APIs',
+            '10000 requêtes/mois',
+            'Support prioritaire',
+            'Personnalisation avancée'
+          ]
+        },
+        {
+          name: 'Enterprise',
+          apiLimit: -1, // illimité
+          price: 5000,
+          features: [
+            'APIs illimitées',
+            'Requêtes illimitées',
+            'Support dédié 24/7',
+            'Personnalisation complète',
+            'SLA garanti'
+          ]
+        }
+      ]
     });
 
     console.log('Plans initialisés avec succès');

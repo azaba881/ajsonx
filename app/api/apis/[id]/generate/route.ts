@@ -54,7 +54,7 @@ export async function POST(
       }
     });
 
-    return Response.json({ data });
+    return Response.json({ mockData: data });
   } catch (error: any) {
     console.error('Erreur lors de la génération des données:', error);
     return Response.json(

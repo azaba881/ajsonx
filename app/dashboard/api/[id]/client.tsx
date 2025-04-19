@@ -200,13 +200,17 @@ export default function ApiClient({ id }: Props) {
 
       const data = await response.json()
       
-      setApi(prev => prev ? {
-        ...prev,
-        mockData: data.api.mockData
-      } : null)
-      
-      setShowGenerateDialog(false)
-      toast.success(`${count} data generated successfully`)
+      if (data.mockData) {
+        setApi(prev => prev ? {
+          ...prev,
+          mockData: data.mockData
+        } : null)
+        
+        setShowGenerateDialog(false)
+        toast.success(`${count} data generated successfully`)
+      } else {
+        toast.error('Failed to generate data')
+      }
       
       await fetchApi()
     } catch (error: any) {

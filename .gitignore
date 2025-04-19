@@ -26,6 +26,7 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env
 
 # vercel
 .vercel
@@ -36,3 +37,8 @@ next-env.d.ts
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# Supprime toutes les lignes contenant ta clé (remplace `sk_test_...` par le vrai début de la clé)
+bfg --delete-files ".env"
+# ou pour supprimer juste la ligne sensible :
+bfg --replace-text my-replacements.txt

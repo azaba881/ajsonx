@@ -6,7 +6,7 @@ import { useAuth } from "@clerk/nextjs"
 import { toast } from "sonner"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, Trash2 } from "lucide-react"
+import { ArrowLeft, Plus, Trash2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface Field {
@@ -19,14 +19,74 @@ export default function CreateSimpleApiPage() {
   const { getToken } = useAuth()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const [errors, setErrors] = useState({
+    name: "",
+    fields: [] as string[]
+  })
   const [apiData, setApiData] = useState({
     name: "",
     description: "",
     fields: [{ name: "", type: "string" }] as Field[]
   })
 
+  const validateName = (name: string) => {
+    if (!name) {
+      setErrors(prev => ({ ...prev, name: "The name is required" }))
+      return false
+    }
+    if (name.length < 3) {
+      setErrors(prev => ({ ...prev, name: "The name must contain at least 3 characters" }))
+      return false
+    }
+    if (!/^[A-Z][a-z0-9]*$/.test(name)) {
+      setErrors(prev => ({ ...prev, name: "The name must start with a capital letter and contain only lowercase letters and numbers" }))
+      return false
+    }
+    setErrors(prev => ({ ...prev, name: "" }))
+    return true
+  }
+
+  const validateField = (field: Field, index: number) => {
+    const newErrors = [...errors.fields]
+    if (!field.name) {
+      newErrors[index] = "The field name is required"
+      setErrors(prev => ({ ...prev, fields: newErrors }))
+      return false
+    }
+    if (!/^[a-z][a-z0-9]*$/.test(field.name)) {
+      newErrors[index] = "The field name must start with a lowercase letter and contain only lowercase letters and numbers"
+      setErrors(prev => ({ ...prev, fields: newErrors }))
+      return false
+    }
+    newErrors[index] = ""
+    setErrors(prev => ({ ...prev, fields: newErrors }))
+    return true
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validation du nom de l'API
+    if (!validateName(apiData.name)) {
+      toast({
+        title: "Error",
+        description: "The API name is invalid",
+        variant: "destructive"
+      })
+      return
+    }
+
+    // Validation des champs
+    const fieldsValid = apiData.fields.every((field, index) => validateField(field, index))
+    if (!fieldsValid) {
+      toast({
+        title: "Error",
+        description: "Some fields are invalid",
+        variant: "destructive"
+      })
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -40,7 +100,7 @@ export default function CreateSimpleApiPage() {
         body: JSON.stringify({
           name: apiData.name,
           description: apiData.description,
-          type: "simple",
+          type: "SIMPLE",
           structure: {
             fields: apiData.fields.reduce((acc, field) => ({
               ...acc,
@@ -56,15 +116,15 @@ export default function CreateSimpleApiPage() {
 
       const data = await response.json()
       toast({
-        title: "API créée avec succès",
-        description: "Votre API simple a été créée avec succès.",
+        title: "API created successfully",
+        description: "Your simple API has been created successfully.",
       })
       router.push(`/dashboard/api/${data.id}`)
     } catch (error) {
       console.error("Error creating API:", error)
       toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la création de l'API.",
+        title: "Error",
+        description: "An error occurred while creating the API.",
         variant: "destructive",
       })
     } finally {
@@ -77,10 +137,18 @@ export default function CreateSimpleApiPage() {
       ...prev,
       fields: [...prev.fields, { name: "", type: "string" }]
     }))
+    setErrors(prev => ({
+      ...prev,
+      fields: [...prev.fields, ""]
+    }))
   }
 
   const removeField = (index: number) => {
     setApiData(prev => ({
+      ...prev,
+      fields: prev.fields.filter((_, i) => i !== index)
+    }))
+    setErrors(prev => ({
       ...prev,
       fields: prev.fields.filter((_, i) => i !== index)
     }))
@@ -91,40 +159,49 @@ export default function CreateSimpleApiPage() {
       ...prev,
       fields: prev.fields.map((f, i) => i === index ? { ...f, ...field } : f)
     }))
+    if (field.name !== undefined) {
+      validateField({ ...apiData.fields[index], ...field }, index)
+    }
   }
 
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Créer une API Simple</h1>
+        <h1 className="text-3xl font-bold">Create a simple API</h1>
         <Link
           href="/dashboard/create-api"
-          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+          className="flex items-center px-4 py-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-md hover:bg-gray-200"
         >
-          Retour
+          <ArrowLeft size={16} className="mr-1" /> Back
         </Link>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Configuration de l'API</CardTitle>
+          <CardTitle>API configuration</CardTitle>
           <CardDescription>
-            Définissez les champs de votre API simple
+            Define the fields of your simple API
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium mb-2">
-                Nom de l'API
+                API name
               </label>
               <input
                 type="text"
                 value={apiData.name}
-                onChange={(e) => setApiData({ ...apiData, name: e.target.value })}
-                className="w-full px-4 py-2 border rounded-md"
+                onChange={(e) => {
+                  setApiData({ ...apiData, name: e.target.value })
+                  validateName(e.target.value)
+                }}
+                className={`w-full px-4 py-2 border rounded-md ${errors.name ? 'border-red-500' : ''}`}
                 required
               />
+              {errors.name && (
+                <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+              )}
             </div>
 
             <div>
@@ -142,7 +219,7 @@ export default function CreateSimpleApiPage() {
             <div>
               <div className="flex justify-between items-center mb-4">
                 <label className="block text-sm font-medium">
-                  Champs
+                  Fields
                 </label>
                 <button
                   type="button"
@@ -150,7 +227,7 @@ export default function CreateSimpleApiPage() {
                   className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center"
                 >
                   <Plus size={16} className="mr-1" />
-                  Ajouter un champ
+                  Add a field
                 </button>
               </div>
 
@@ -162,10 +239,13 @@ export default function CreateSimpleApiPage() {
                         type="text"
                         value={field.name}
                         onChange={(e) => updateField(index, { name: e.target.value })}
-                        className="w-full px-4 py-2 border rounded-md"
-                        placeholder="Nom du champ"
+                        className={`w-full px-4 py-2 border rounded-md ${errors.fields[index] ? 'border-red-500' : ''}`}
+                        placeholder="Field name"
                         required
                       />
+                      {errors.fields[index] && (
+                        <p className="text-red-500 text-sm mt-1">{errors.fields[index]}</p>
+                      )}
                     </div>
                     <div className="w-32">
                       <select
@@ -195,9 +275,9 @@ export default function CreateSimpleApiPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="px-6 py-2 bg-[#EA580C] text-white rounded-md hover:bg-[#C2410C] disabled:opacity-50"
+                className="px-6 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-md hover:bg-[#C2410C] disabled:opacity-50"
               >
-                {isLoading ? "Création en cours..." : "Créer l'API"}
+                {isLoading ? "Creation in progress..." : "Create API"}
               </button>
             </div>
           </form>

@@ -6,7 +6,7 @@ import { useAuth } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast"
 
 interface Type {
@@ -55,20 +55,20 @@ export default function CreateGraphqlApiPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Erreur lors de la création de l\'API');
+        throw new Error(error.error || 'Error creating the API');
       }
 
       const data = await response.json();
       toast({
-        title: "API créée avec succès",
-        description: "Votre API GraphQL a été créée avec succès.",
+        title: "API created successfully",
+        description: "Your GraphQL API has been created successfully.",
       });
       router.push('/dashboard');
     } catch (error: any) {
       console.error("Error creating API:", error);
       toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la création de l'API.",
+        title: "Error",
+        description: "An error occurred while creating the API.",
         variant: "destructive",
       });
     } finally {
@@ -140,27 +140,27 @@ export default function CreateGraphqlApiPage() {
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Créer une API GraphQL</h1>
+        <h1 className="text-3xl font-bold">Create a GraphQL API</h1>
         <Link
           href="/dashboard/create-api"
-          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+          className="flex items-center px-4 py-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-md hover:bg-gray-200"
         >
-          Retour
+          <ArrowLeft size={16} className="mr-1" /> Back
         </Link>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Configuration de l'API GraphQL</CardTitle>
+          <CardTitle>GraphQL API configuration</CardTitle>
           <CardDescription>
-            Définissez les types et les champs de votre API GraphQL
+            Define the types and fields of your GraphQL API
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium mb-2">
-                Nom de l'API
+                API name
               </label>
               <input
                 type="text"
@@ -186,7 +186,7 @@ export default function CreateGraphqlApiPage() {
             <div>
               <div className="flex justify-between items-center mb-4">
                 <label className="block text-sm font-medium">
-                  Types GraphQL
+                  GraphQL types
                 </label>
                 <button
                   type="button"
@@ -194,7 +194,7 @@ export default function CreateGraphqlApiPage() {
                   className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center"
                 >
                   <Plus size={16} className="mr-1" />
-                  Ajouter un type
+                  Add a type
                 </button>
               </div>
 
@@ -208,7 +208,7 @@ export default function CreateGraphqlApiPage() {
                           value={type.name}
                           onChange={(e) => updateType(typeIndex, { name: e.target.value })}
                           className="w-full px-4 py-2 border rounded-md"
-                          placeholder="Nom du type"
+                          placeholder="Type name"
                           required
                         />
                         <button
@@ -223,14 +223,14 @@ export default function CreateGraphqlApiPage() {
                     <CardContent>
                       <div className="space-y-4">
                         <div className="flex justify-between items-center mb-2">
-                          <label className="text-sm font-medium">Champs</label>
+                          <label className="text-sm font-medium">Fields</label>
                           <button
                             type="button"
                             onClick={() => addField(typeIndex)}
                             className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center text-sm"
                           >
                             <Plus size={14} className="mr-1" />
-                            Ajouter un champ
+                            Add a field
                           </button>
                         </div>
                         {type.fields.map((field, fieldIndex) => (
@@ -240,7 +240,7 @@ export default function CreateGraphqlApiPage() {
                               value={field.name}
                               onChange={(e) => updateField(typeIndex, fieldIndex, { name: e.target.value })}
                               className="flex-1 px-4 py-2 border rounded-md"
-                              placeholder="Nom du champ"
+                              placeholder="Field name"
                               required
                             />
                             <select
@@ -280,10 +280,10 @@ export default function CreateGraphqlApiPage() {
             <div className="flex justify-end">
               <button
                 type="submit"
+                className="w-full px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-md hover:opacity-90 disabled:opacity-50"
                 disabled={isLoading}
-                className="px-6 py-2 bg-[#EA580C] text-white rounded-md hover:bg-[#C2410C] disabled:opacity-50"
               >
-                {isLoading ? 'Création en cours...' : 'Créer l\'API GraphQL'}
+                {isLoading ? 'Creating API...' : 'Create API'}
               </button>
             </div>
           </form>

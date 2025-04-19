@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Database, GitBranch, Share2 } from "lucide-react"
+import { ArrowLeft, Database, GitBranch, Share2 } from "lucide-react"
 
 export default function CreateApiPage() {
   return (
@@ -12,9 +12,9 @@ export default function CreateApiPage() {
           <h1 className="text-3xl font-bold">Créer une nouvelle API</h1>
           <Link
             href="/dashboard"
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+            className="flex items-center px-4 py-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-md hover:bg-gray-200"
           >
-            Retour
+            <ArrowLeft size={16} className="mr-1" /> Back
           </Link>
         </div>
 
@@ -25,15 +25,15 @@ export default function CreateApiPage() {
                 <Database className="w-8 h-8 text-[#EA580C] mb-2" />
                 <CardTitle>Simple API</CardTitle>
                 <CardDescription>
-                  Créez une API simple avec des endpoints personnalisés et une structure de données unique.
+                  Create a simple API with custom endpoints and a unique data structure.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                  <li>Structure de données simple</li>
-                  <li>Endpoints GET, POST, PUT, DELETE</li>
-                  <li>Réponses JSON personnalisées</li>
-                  <li>Documentation automatique</li>
+                  <li>Simple data structure</li>
+                  <li>GET, POST, PUT, DELETE endpoints</li>
+                  <li>Custom JSON responses</li>
+                  <li>Automatic documentation</li>
                 </ul>
               </CardContent>
             </Card>
@@ -43,17 +43,17 @@ export default function CreateApiPage() {
             <Card className="cursor-pointer hover:shadow-lg transition-shadow h-full">
               <CardHeader>
                 <GitBranch className="w-8 h-8 text-[#EA580C] mb-2" />
-                <CardTitle>API avec Relations</CardTitle>
+                <CardTitle>API with relations</CardTitle>
                 <CardDescription>
-                  Créez une API avec des entités liées et une structure de données relationnelle.
+                  Create an API with linked entities and a relational data structure.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                  <li>Modèle de données relationnel</li>
-                  <li>Relations entre entités</li>
-                  <li>CRUD complet sur chaque entité</li>
-                  <li>Documentation avec schéma relationnel</li>
+                  <li>Relational data model</li>
+                  <li>Relations between entities</li>
+                  <li>Complete CRUD on each entity</li>
+                  <li>Documentation with relational schema</li>
                 </ul>
               </CardContent>
             </Card>
@@ -65,15 +65,15 @@ export default function CreateApiPage() {
                 <Share2 className="w-8 h-8 text-[#EA580C] mb-2" />
                 <CardTitle>GraphQL API</CardTitle>
                 <CardDescription>
-                  Créez une API GraphQL avec un schéma personnalisé et des résolveurs automatiques.
+                  Create a GraphQL API with a custom schema and automatic resolvers.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                  <li>Schéma GraphQL personnalisé</li>
-                  <li>Résolveurs automatiques</li>
-                  <li>Types et mutations</li>
-                  <li>Playground intégré</li>
+                  <li>Custom GraphQL schema</li>
+                  <li>Automatic resolvers</li>
+                  <li>Types and mutations</li>
+                  <li>Integrated playground</li>
                 </ul>
               </CardContent>
             </Card>

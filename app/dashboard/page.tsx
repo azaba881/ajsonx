@@ -20,6 +20,7 @@ interface Api {
   description: string;
   type: 'SIMPLE' | 'GRAPHQL' | 'RELATIONAL';
   structure: ApiStructure;
+  mockData?: any;
   createdAt: Date;
   updatedAt: Date;
   endpoints: Array<{
@@ -55,7 +56,7 @@ export default function DashboardPage() {
 
           if (!syncResponse.ok) {
             const errorData = await syncResponse.json();
-            throw new Error(errorData.error || 'Erreur lors de la synchronisation');
+            throw new Error(errorData.error || 'Error during synchronization');
           }
 
           // Charger les APIs
@@ -67,14 +68,14 @@ export default function DashboardPage() {
 
           if (!apisResponse.ok) {
             const errorData = await apisResponse.json();
-            throw new Error(errorData.error || 'Erreur lors de la récupération des APIs');
+            throw new Error(errorData.error || 'Error during API retrieval');
           }
 
           const data = await apisResponse.json();
           setApis(data);
           setFilteredApis(data);
         } catch (error: any) {
-          console.error('Erreur:', error);
+          console.error('Error:', error);
           setError(error.message);
           toast.error(error.message);
         } finally {
@@ -126,36 +127,58 @@ export default function DashboardPage() {
   const getApiTypeName = (type: Api['type']) => {
     switch (type) {
       case 'SIMPLE':
-        return 'API Simple';
+        return 'Simple API';
       case 'RELATIONAL':
-        return 'API Relationnelle';
+        return 'Relational API';
       case 'GRAPHQL':
-        return 'API GraphQL';
+        return 'GraphQL API';
       default:
         return 'API';
     }
   };
 
   const apiTypeOptions = [
-    { value: 'SIMPLE', label: 'API Simple' },
-    { value: 'RELATIONAL', label: 'API Relationnelle' },
-    { value: 'GRAPHQL', label: 'API GraphQL' },
+    { value: 'SIMPLE', label: 'Simple API' },
+    { value: 'RELATIONAL', label: 'Relational API' },
+    { value: 'GRAPHQL', label: 'GraphQL API' },
   ];
+
+  const getMockDataCount = (api: Api): number => {
+    if (!api.mockData) return 0
+    
+    if (api.type === 'SIMPLE') {
+      return Array.isArray(api.mockData) ? api.mockData.length : 0
+    }
+    
+    if (api.type === 'RELATIONAL') {
+      const mockData = api.mockData as Record<string, unknown[]>;
+      return Object.values(mockData)
+        .reduce((total: number, arr) => total + (Array.isArray(arr) ? arr.length : 0), 0)
+    }
+    
+    if (api.type === 'GRAPHQL') {
+      const mockData = api.mockData as { data: Record<string, unknown[]> };
+      return Object.values(mockData.data || {})
+        .reduce((total: number, arr) => total + (Array.isArray(arr) ? arr.length : 0), 0)
+    }
+    
+    return 0
+  }
 
   if (!userId) {
     return (
       <div className="container mx-auto py-10">
         <div className="text-center py-10">
           <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">Non authentifié</h3>
-          <p className="mt-1 text-sm text-gray-500">Veuillez vous connecter pour accéder à vos APIs.</p>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">Not authenticated</h3>
+          <p className="mt-1 text-sm text-gray-500">Please login to access your APIs.</p>
         </div>
       </div>
     );
   }
 
   const handleDeleteApi = async (apiId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cette API ?")) return
+    if (!confirm("Are you sure you want to delete this API ?")) return
 
     try {
       const token = await getToken()
@@ -167,11 +190,11 @@ export default function DashboardPage() {
       })
 
       if (!response.ok) {
-        throw new Error("Erreur lors de la suppression de l'API")
+        throw new Error("Error during API deletion")
       }
 
       setApis(apis.filter(api => api.id !== apiId))
-      toast.success("API supprimée avec succès")
+      toast.success("API deleted successfully")
     } catch (error: any) {
       toast.error(error.message)
     }
@@ -189,7 +212,7 @@ export default function DashboardPage() {
             <CardContent>
               <div className="text-2xl font-bold">{apis.length}</div>
               <p className="text-xs text-gray-500 mt-1">
-                {apis.length === 0 ? 'Aucune API' : apis.length === 1 ? '1 API créée' : `${apis.length} APIs créées`}
+                {apis.length === 0 ? 'No API' : apis.length === 1 ? '1 API created' : `${apis.length} APIs created`}
               </p>
             </CardContent>
           </Card>
@@ -199,7 +222,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-gray-500 mt-1">Requêtes totales</p>
+              <p className="text-xs text-gray-500 mt-1">Total requests</p>
             </CardContent>
           </Card>
           <Card>
@@ -262,7 +285,7 @@ export default function DashboardPage() {
           ) : error ? (
             <div className="text-center py-10">
               <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">Erreur</h3>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">Error</h3>
               <p className="mt-1 text-sm text-gray-500">{error}</p>
               <button
                 onClick={() => {
@@ -272,24 +295,24 @@ export default function DashboardPage() {
                 }}
                 className="mt-4 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
               >
-                Réessayer
+                Try again
               </button>
             </div>
           ) : filteredApis.length === 0 ? (
             <div className="text-center py-10">
               <Database className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">
-                {searchTerm || selectedType !== 'all' ? 'Aucun résultat' : 'Aucune API'}
+                {searchTerm || selectedType !== 'all' ? 'No results' : 'No API'}
               </h3>
               <p className="mt-1 text-sm text-gray-500">
                 {searchTerm || selectedType !== 'all' 
-                  ? 'Essayez de modifier vos filtres'
-                  : 'Commencez par créer votre première API'}
+                  ? 'Try to modify your filters'
+                  : 'Start by creating your first API'}
               </p>
               {!searchTerm && selectedType === 'all' && (
                 <Link
                   href="/dashboard/create-api"
-                  className="mt-4 inline-block px-4 py-2 bg-[#EA580C] text-white rounded-md hover:bg-[#C2410C]"
+                  className="mt-4 inline-block px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-md hover:bg-[#C2410C]"
                 >
                   Create New API
                 </Link>
@@ -328,7 +351,7 @@ export default function DashboardPage() {
                     <div className="flex justify-between items-center text-sm text-gray-500">                   
                       <div>
                         <span className='mb-2'>{api.endpoints?.length || 0} endpoints</span><br />
-                        <span> 0 fakes data</span>
+                        <span>{getMockDataCount(api)} generated records</span>
                       </div>
                       <span>Created {new Date(api.createdAt).toLocaleDateString()}</span>
                     </div>                    

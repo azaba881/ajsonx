@@ -5,7 +5,7 @@ import type { CreateEndpointInput } from '@/lib/types/api';
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -44,7 +44,12 @@ export async function POST(
       );
     }
 
+    const params = await context.params;
+    console.log('Creating endpoint for API:', params.id, 'with path:', body.path);
+    
     const endpoint = await ApiService.addEndpoint(params.id, session.userId, body);
+    console.log('Endpoint created:', endpoint);
+    
     return NextResponse.json(endpoint, { status: 201 });
   } catch (error: any) {
     console.error('Erreur lors de la création de l\'endpoint:', error);

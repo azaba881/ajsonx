@@ -50,28 +50,106 @@ export default function CreateRelatedApiPage() {
     target: ""
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [nameError, setNameError] = useState("")
+  const [entityError, setEntityError] = useState("")
+  const [fieldError, setFieldError] = useState("")
+  const [relationError, setRelationError] = useState("")
+
+  const validateName = (value: string) => {
+    if (!value) {
+      setNameError("The name is required")
+      return false
+    }
+    if (value.length < 3) {
+      setNameError("The name must contain at least 3 characters")
+      return false
+    }
+    if (!/^[A-Z][a-z0-9]*$/.test(value)) {
+      setNameError("The name must start with a capital letter and contain only lowercase letters and numbers")
+      return false
+    }
+    setNameError("")
+    return true
+  }
+
+  const validateEntityName = (value: string) => {
+    if (!value) {
+      setEntityError("The entity name is required")
+      return false
+    }
+    if (value.length < 3) {
+      setEntityError("The entity name must contain at least 3 characters")
+      return false
+    }
+    if (!/^[a-z][a-z0-9]*$/.test(value)) {
+      setEntityError("The entity name must start with a lowercase letter and contain only lowercase letters and numbers")
+      return false
+    }
+    if (entities.some(e => e.name === value)) {
+      setEntityError("An entity with this name already exists")
+      return false
+    }
+    setEntityError("")
+    return true
+  }
+
+  const validateFieldName = (value: string, entityIndex: number) => {
+    if (!value) {
+      setFieldError("The field name is required")
+      return false
+    }
+    if (value.length < 2) {
+      setFieldError("The field name must contain at least 2 characters")
+      return false
+    }
+    if (!/^[a-z][a-z0-9]*$/.test(value)) {
+      setFieldError("The field name must start with a lowercase letter and contain only lowercase letters and numbers")
+      return false
+    }
+    const entity = entities[entityIndex]
+    if (entity.fields[value]) {
+      setFieldError("A field with this name already exists")
+      return false
+    }
+    setFieldError("")
+    return true
+  }
+
+  const validateRelationName = (value: string, entityIndex: number) => {
+    if (!value) {
+      setRelationError("The relation name is required")
+      return false
+    }
+    if (value.length < 2) {
+      setRelationError("The relation name must contain at least 2 characters")
+      return false
+    }
+    if (!/^[a-z][a-z0-9]*$/.test(value)) {
+      setRelationError("The relation name must start with a lowercase letter and contain only lowercase letters and numbers")
+      return false
+    }
+    const entity = entities[entityIndex]
+    if (entity.relations[value]) {
+      setRelationError("A relation with this name already exists")
+      return false
+    }
+    setRelationError("")
+    return true
+  }
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setName(value)
+    validateName(value)
+  }
 
   const handleAddEntity = () => {
-    if (!currentEntity.trim()) return
+    if (!validateEntityName(currentEntity)) return
     
-    const entityName = currentEntity.trim()
-    if (entityName.includes(" ")) {
-      toast({ title: "Erreur", description: "Le nom de l'entité ne doit pas contenir d'espaces", variant: "destructive" })
-      return
-    }
-    if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(entityName)) {
-      toast({ title: "Erreur", description: "Le nom de l'entité doit commencer par une lettre et ne contenir que des lettres et des chiffres", variant: "destructive" })
-      return
-    }
-    if (entities.some(e => e.name === entityName)) {
-      toast({ title: "Erreur", description: "Une entité avec ce nom existe déjà", variant: "destructive" })
-      return
-    }
-
     setEntities([
       ...entities,
       {
-        name: entityName,
+        name: currentEntity,
         fields: {},
         relations: {}
       }
@@ -80,31 +158,15 @@ export default function CreateRelatedApiPage() {
   }
 
   const handleAddField = (entityIndex: number) => {
-    if (!currentField.name.trim()) return
-    
-    // Validation du nom du champ
-    const fieldName = currentField.name.trim()
-    if (fieldName.includes(" ")) {
-      toast({ title: "Erreur", description: "Le nom du champ ne doit pas contenir d'espaces", variant: "destructive" })
-      return
-    }
-    if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(fieldName)) {
-      toast({ title: "Erreur", description: "Le nom du champ doit commencer par une lettre et ne contenir que des lettres et des chiffres", variant: "destructive" })
-      return
-    }
+    if (!validateFieldName(currentField.name, entityIndex)) return
     
     const entity = entities[entityIndex]
-    if (entity.fields[fieldName]) {
-      toast({ title: "Erreur", description: "Un champ avec ce nom existe déjà", variant: "destructive" })
-      return
-    }
-
     const updatedEntities = [...entities]
     updatedEntities[entityIndex] = {
       ...entity,
       fields: {
         ...entity.fields,
-        [fieldName]: {
+        [currentField.name]: {
           type: currentField.type.toLowerCase()
         }
       }
@@ -114,30 +176,15 @@ export default function CreateRelatedApiPage() {
   }
 
   const handleAddRelation = (entityIndex: number) => {
-    if (!currentRelation.name.trim() || !currentRelation.target) return
-    
-    // Validation du nom de la relation
-    const relationName = currentRelation.name.trim()
-    if (relationName.includes(" ")) {
-      toast({ title: "Erreur", description: "Le nom de la relation ne doit pas contenir d'espaces", variant: "destructive" })
-      return
-    }
-    if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(relationName)) {
-      toast({ title: "Erreur", description: "Le nom de la relation doit commencer par une lettre et ne contenir que des lettres et des chiffres", variant: "destructive" })
-      return
-    }
+    if (!validateRelationName(currentRelation.name, entityIndex)) return
     
     const entity = entities[entityIndex]
-    if (entity.relations[relationName]) {
-      toast({ title: "Erreur", description: "Une relation avec ce nom existe déjà", variant: "destructive" })
-      return
-    }
     if (currentRelation.target === entity.name) {
-      toast({ title: "Erreur", description: "Une entité ne peut pas avoir une relation avec elle-même", variant: "destructive" })
+      setRelationError("An entity cannot have a relation with itself")
       return
     }
     if (!entities.some(e => e.name === currentRelation.target)) {
-      toast({ title: "Erreur", description: "L'entité cible n'existe pas", variant: "destructive" })
+      setRelationError("The target entity does not exist")
       return
     }
 
@@ -146,7 +193,7 @@ export default function CreateRelatedApiPage() {
       ...entity,
       relations: {
         ...entity.relations,
-        [relationName]: {
+        [currentRelation.name]: {
           type: currentRelation.type,
           target: currentRelation.target
         }
@@ -187,6 +234,15 @@ export default function CreateRelatedApiPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validateName(name)) return
+    if (entities.length === 0) {
+      toast({
+        title: "Error",
+        description: "You must create at least one entity",
+        variant: "destructive"
+      })
+      return
+    }
     setIsLoading(true)
 
     try {
@@ -198,9 +254,9 @@ export default function CreateRelatedApiPage() {
         body: JSON.stringify({
           name,
           description,
-          type: "relational",
-          schema: {
-            tables: entities.map((entity) => ({
+          type: "RELATIONAL",
+          structure: {
+            fields: entities.map((entity) => ({
               name: entity.name,
               fields: Object.entries(entity.fields).map(([fieldName, field]) => ({
                 name: fieldName,
@@ -223,15 +279,15 @@ export default function CreateRelatedApiPage() {
 
       const data = await response.json()
       toast({
-        title: "API créée avec succès",
-        description: "Votre API relationnelle a été créée avec succès.",
+        title: "API created successfully",
+        description: "Your relational API has been created successfully.",
       })
       router.push(`/dashboard/api/${data.id}`)
     } catch (error) {
       console.error("Error creating API:", error)
       toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la création de l'API.",
+        title: "Error",
+        description: "An error occurred while creating the API.",
         variant: "destructive",
       })
     } finally {
@@ -241,34 +297,34 @@ export default function CreateRelatedApiPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Create a relational API</h1>
         <Link
           href="/dashboard/create-api"
-          className="p-2 hover:bg-gray-100 rounded-full"
+          className="flex items-center px-4 py-1 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-md hover:bg-gray-200"
         >
-          <ArrowLeft size={24} />
+          <ArrowLeft size={16} className="mr-1" /> Back
         </Link>
-        <h1 className="text-3xl font-bold">Créer une API avec relations</h1>
       </div>
-
       <form onSubmit={handleSubmit} className="space-y-8">
         <Card>
           <CardHeader>
-            <CardTitle>Informations générales</CardTitle>
+            <CardTitle>General informations</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2">
-                Nom de l'API
+                API name
               </label>
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2 border rounded-md"
-                placeholder="Mon API"
+                onChange={handleNameChange}
+                className={`w-full px-4 py-2 border rounded-md ${nameError ? 'border-red-500' : ''}`}
+                placeholder="My API"
                 required
               />
+              {nameError && <p className="text-red-500 text-sm mt-1">{nameError}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">
@@ -278,7 +334,7 @@ export default function CreateRelatedApiPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full px-4 py-2 border rounded-md"
-                placeholder="Description de l'API"
+                placeholder="API description"
                 rows={3}
               />
             </div>
@@ -287,7 +343,7 @@ export default function CreateRelatedApiPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Entités</CardTitle>
+            <CardTitle>Entities</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex gap-4 mb-6">
@@ -295,18 +351,19 @@ export default function CreateRelatedApiPage() {
                 type="text"
                 value={currentEntity}
                 onChange={(e) => setCurrentEntity(e.target.value)}
-                className="flex-1 px-4 py-2 border rounded-md"
-                placeholder="Nom de l'entité"
+                className={`flex-1 px-4 py-2 border rounded-md ${entityError ? 'border-red-500' : ''}`}
+                placeholder="Entity name"
               />
               <button
                 type="button"
                 onClick={handleAddEntity}
-                className="px-4 py-2 bg-[#EA580C] text-white rounded-md hover:bg-[#C2410C] flex items-center"
+                className="px-4 py-2 bg-gray-400 text-black rounded-md hover:bg-[#C2410C] flex items-center"
               >
                 <Plus size={16} className="mr-2" />
-                Ajouter
+                Add
               </button>
             </div>
+            {entityError && <p className="text-red-500 text-sm mb-4">{entityError}</p>}
 
             <div className="space-y-6">
               {entities.map((entity, entityIndex) => (
@@ -324,7 +381,7 @@ export default function CreateRelatedApiPage() {
                   <CardContent>
                     <div className="space-y-6">
                       <div>
-                        <h4 className="font-medium mb-4">Champs</h4>
+                        <h4 className="font-medium mb-4">Fields</h4>
                         <div className="flex gap-4 mb-4">
                           <input
                             type="text"
@@ -333,8 +390,8 @@ export default function CreateRelatedApiPage() {
                               ...currentField,
                               name: e.target.value
                             })}
-                            className="flex-1 px-4 py-2 border rounded-md"
-                            placeholder="Nom du champ"
+                            className={`flex-1 px-4 py-2 border rounded-md ${fieldError ? 'border-red-500' : ''}`}
+                            placeholder="Field name"
                           />
                           <select
                             value={currentField.type}
@@ -355,9 +412,10 @@ export default function CreateRelatedApiPage() {
                             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center"
                           >
                             <Plus size={16} className="mr-2" />
-                            Ajouter
+                            Add
                           </button>
                         </div>
+                        {fieldError && <p className="text-red-500 text-sm mb-4">{fieldError}</p>}
                         <div className="space-y-2">
                           {Object.entries(entity.fields).map(([fieldName, field]) => (
                             <div
@@ -390,8 +448,8 @@ export default function CreateRelatedApiPage() {
                               ...currentRelation,
                               name: e.target.value
                             })}
-                            className="flex-1 px-4 py-2 border rounded-md"
-                            placeholder="Nom de la relation"
+                            className={`flex-1 px-4 py-2 border rounded-md ${relationError ? 'border-red-500' : ''}`}
+                            placeholder="Relation name"
                           />
                           <select
                             value={currentRelation.type}
@@ -414,7 +472,7 @@ export default function CreateRelatedApiPage() {
                             })}
                             className="px-4 py-2 border rounded-md"
                           >
-                            <option value="">Entité cible</option>
+                            <option value="">Target entity</option>
                             {entities
                               .filter(e => e.name !== entity.name)
                               .map(e => (
@@ -429,9 +487,10 @@ export default function CreateRelatedApiPage() {
                             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center"
                           >
                             <Plus size={16} className="mr-2" />
-                            Ajouter
+                            Add
                           </button>
                         </div>
+                        {relationError && <p className="text-red-500 text-sm mb-4">{relationError}</p>}
                         <div className="space-y-2">
                           {Object.entries(entity.relations).map(([relationName, relation]) => (
                             <div
@@ -466,9 +525,9 @@ export default function CreateRelatedApiPage() {
         <div className="flex justify-end">
           <button
             type="submit"
-            className="px-6 py-2 bg-[#EA580C] text-white rounded-md hover:bg-[#C2410C]"
+            className="px-6 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-md hover:bg-[#C2410C]"
           >
-            Créer l'API
+            Create API
           </button>
         </div>
       </form>

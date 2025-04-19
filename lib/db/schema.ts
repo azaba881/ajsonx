@@ -25,7 +25,7 @@ export const apis = pgTable('apis', {
   userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   description: text('description'),
-  type: text('type', { enum: ['simple', 'relation'] }).notNull(),
+  type: text('type', { enum: ['SIMPLE', 'RELATIONAL', 'GRAPHQL'] }).notNull(),
   structure: jsonb('structure').notNull(),
   isPublic: boolean('is_public').default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),

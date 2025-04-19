@@ -122,9 +122,8 @@ export class ApiService {
   }
 
   static async addEndpoint(apiId: string, userId: string, input: CreateEndpointInput) {
-    const user = await prisma.user.findUnique({
-      where: { clerkUserId: userId }
-    });
+    // Synchroniser l'utilisateur
+    const user = await syncClerkUser();
 
     if (!user) {
       throw new Error('Utilisateur non trouvé');

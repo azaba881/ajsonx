@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Search, Plus, Filter, MoreHorizontal, Database, AlertTriangle } from "lucide-react"
+import { toast } from "react-hot-toast"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -86,6 +87,29 @@ export function ApiManagement() {
     console.log(`Deleting API with id: ${deleteApiId}`)
     setDeleteApiId(null)
   }
+
+  const handleGenerateData = async (count: number, overwrite: boolean = false) => {
+    try {
+      const response = await fetch(`/api/apis/${api.id}/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ count, overwrite }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors de la génération des données');
+      }
+
+      setMockData(data.api.mockData);
+      toast.success(`Données générées avec succès (${data.operation})`);
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
 
   return (
     <>

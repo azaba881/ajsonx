@@ -4,6 +4,7 @@ import './globals.css'
 import { ThemeProvider } from 'next-themes';
 import ConditionalLayout from '@/components/ConditionalLayout';
 import { ClerkProvider } from '@clerk/nextjs';
+import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
   title: 'AjsonX | Generate your API',
@@ -21,6 +22,7 @@ export default function RootLayout({
         <body>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <ConditionalLayout>{children}</ConditionalLayout>
+            <Toaster />
           </ThemeProvider>
         </body>
       </html>

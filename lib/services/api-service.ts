@@ -26,7 +26,7 @@ export class ApiService {
       data: {
         name: input.name,
         description: input.description,
-        type: input.type,
+        type: input.type as ApiType,
         structure: input.structure,
         userId: user.id
       },

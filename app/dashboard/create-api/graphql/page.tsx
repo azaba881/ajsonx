@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast"
 
 interface Type {
   name: string;
@@ -16,6 +17,7 @@ interface Type {
 export default function CreateGraphqlApiPage() {
   const router = useRouter();
   const { getToken } = useAuth();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [apiData, setApiData] = useState({
     name: '',
@@ -38,7 +40,7 @@ export default function CreateGraphqlApiPage() {
         body: JSON.stringify({
           name: apiData.name,
           description: apiData.description,
-          type: 'GRAPHQL',
+          type: 'graphql',
           structure: {
             types: apiData.types.map(type => ({
               name: type.name,
@@ -57,10 +59,18 @@ export default function CreateGraphqlApiPage() {
       }
 
       const data = await response.json();
-      toast.success('API GraphQL créée avec succès');
+      toast({
+        title: "API créée avec succès",
+        description: "Votre API GraphQL a été créée avec succès.",
+      });
       router.push('/dashboard');
     } catch (error: any) {
-      toast.error(error.message);
+      console.error("Error creating API:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la création de l'API.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }

@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import Link from "next/link"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Plus, Trash2, ArrowLeft } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface Entity {
   name: string
@@ -37,6 +38,7 @@ interface Relation {
 export default function CreateRelatedApiPage() {
   const router = useRouter()
   const { getToken } = useAuth()
+  const { toast } = useToast()
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [entities, setEntities] = useState<Entity[]>([])
@@ -47,22 +49,22 @@ export default function CreateRelatedApiPage() {
     type: "oneToOne",
     target: ""
   })
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleAddEntity = () => {
     if (!currentEntity.trim()) return
     
-    // Validation du nom de l'entité
     const entityName = currentEntity.trim()
     if (entityName.includes(" ")) {
-      toast.error("Le nom de l'entité ne doit pas contenir d'espaces")
+      toast({ title: "Erreur", description: "Le nom de l'entité ne doit pas contenir d'espaces", variant: "destructive" })
       return
     }
     if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(entityName)) {
-      toast.error("Le nom de l'entité doit commencer par une lettre et ne contenir que des lettres et des chiffres")
+      toast({ title: "Erreur", description: "Le nom de l'entité doit commencer par une lettre et ne contenir que des lettres et des chiffres", variant: "destructive" })
       return
     }
     if (entities.some(e => e.name === entityName)) {
-      toast.error("Une entité avec ce nom existe déjà")
+      toast({ title: "Erreur", description: "Une entité avec ce nom existe déjà", variant: "destructive" })
       return
     }
 
@@ -83,17 +85,17 @@ export default function CreateRelatedApiPage() {
     // Validation du nom du champ
     const fieldName = currentField.name.trim()
     if (fieldName.includes(" ")) {
-      toast.error("Le nom du champ ne doit pas contenir d'espaces")
+      toast({ title: "Erreur", description: "Le nom du champ ne doit pas contenir d'espaces", variant: "destructive" })
       return
     }
     if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(fieldName)) {
-      toast.error("Le nom du champ doit commencer par une lettre et ne contenir que des lettres et des chiffres")
+      toast({ title: "Erreur", description: "Le nom du champ doit commencer par une lettre et ne contenir que des lettres et des chiffres", variant: "destructive" })
       return
     }
     
     const entity = entities[entityIndex]
     if (entity.fields[fieldName]) {
-      toast.error("Un champ avec ce nom existe déjà")
+      toast({ title: "Erreur", description: "Un champ avec ce nom existe déjà", variant: "destructive" })
       return
     }
 
@@ -117,25 +119,25 @@ export default function CreateRelatedApiPage() {
     // Validation du nom de la relation
     const relationName = currentRelation.name.trim()
     if (relationName.includes(" ")) {
-      toast.error("Le nom de la relation ne doit pas contenir d'espaces")
+      toast({ title: "Erreur", description: "Le nom de la relation ne doit pas contenir d'espaces", variant: "destructive" })
       return
     }
     if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(relationName)) {
-      toast.error("Le nom de la relation doit commencer par une lettre et ne contenir que des lettres et des chiffres")
+      toast({ title: "Erreur", description: "Le nom de la relation doit commencer par une lettre et ne contenir que des lettres et des chiffres", variant: "destructive" })
       return
     }
     
     const entity = entities[entityIndex]
     if (entity.relations[relationName]) {
-      toast.error("Une relation avec ce nom existe déjà")
+      toast({ title: "Erreur", description: "Une relation avec ce nom existe déjà", variant: "destructive" })
       return
     }
     if (currentRelation.target === entity.name) {
-      toast.error("Une entité ne peut pas avoir une relation avec elle-même")
+      toast({ title: "Erreur", description: "Une entité ne peut pas avoir une relation avec elle-même", variant: "destructive" })
       return
     }
     if (!entities.some(e => e.name === currentRelation.target)) {
-      toast.error("L'entité cible n'existe pas")
+      toast({ title: "Erreur", description: "L'entité cible n'existe pas", variant: "destructive" })
       return
     }
 
@@ -185,42 +187,55 @@ export default function CreateRelatedApiPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim()) {
-      toast.error("Le nom de l'API est requis")
-      return
-    }
-    if (entities.length === 0) {
-      toast.error("Au moins une entité est requise")
-      return
-    }
+    setIsLoading(true)
 
     try {
-      const token = await getToken()
       const response = await fetch("/api/apis", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
           name,
           description,
-          type: "RELATIONAL",
-          structure: {
-            entities
-          }
-        })
+          type: "relational",
+          schema: {
+            tables: entities.map((entity) => ({
+              name: entity.name,
+              fields: Object.entries(entity.fields).map(([fieldName, field]) => ({
+                name: fieldName,
+                type: field.type,
+                required: false,
+              })),
+              relations: Object.entries(entity.relations).map(([relationName, relation]) => ({
+                targetTable: relation.target,
+                type: relation.type,
+                field: relationName,
+              })),
+            })),
+          },
+        }),
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Erreur lors de la création de l'API")
+        throw new Error("Failed to create API")
       }
 
-      toast.success("API créée avec succès")
-      router.push("/dashboard")
-    } catch (error: any) {
-      toast.error(error.message)
+      const data = await response.json()
+      toast({
+        title: "API créée avec succès",
+        description: "Votre API relationnelle a été créée avec succès.",
+      })
+      router.push(`/dashboard/api/${data.id}`)
+    } catch (error) {
+      console.error("Error creating API:", error)
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la création de l'API.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 

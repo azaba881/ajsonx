@@ -6,7 +6,18 @@ import { useAuth } from "@clerk/nextjs"
 import { toast } from "sonner"
 import Link from "next/link"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Database, Plus, Trash2, Edit2, Copy } from "lucide-react"
+import { Database, Plus, Trash2, Edit2, Copy, Wand2 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface Api {
   id: string
@@ -15,6 +26,7 @@ interface Api {
   type: string
   structure: any
   endpoints: Endpoint[]
+  mockData?: any[]
 }
 
 interface Endpoint {
@@ -33,11 +45,15 @@ export default function ApiClient({ id }: Props) {
   const { getToken } = useAuth()
   const [api, setApi] = useState<Api | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [count, setCount] = useState(10)
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false)
   const [newEndpoint, setNewEndpoint] = useState({
     path: '',
     method: 'GET',
     response: {}
   })
+  const [overwriteData, setOverwriteData] = useState(true);
 
   useEffect(() => {
     if (id) {
@@ -138,6 +154,46 @@ export default function ApiClient({ id }: Props) {
     toast.success('URL copiée dans le presse-papier')
   }
 
+  const handleGenerateData = async () => {
+    if (!api) return
+    
+    setIsGenerating(true)
+    try {
+      const token = await getToken()
+      const response = await fetch(`/api/apis/${id}/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          count,
+          overwrite: overwriteData
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la génération des données')
+      }
+
+      const data = await response.json()
+      
+      setApi(prev => prev ? {
+        ...prev,
+        mockData: data.api.mockData
+      } : null)
+      
+      setShowGenerateDialog(false)
+      toast.success(`${count} données générées avec succès`)
+      
+      await fetchApi()
+    } catch (error: any) {
+      toast.error(error.message)
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="container mx-auto py-10">
@@ -169,12 +225,65 @@ export default function ApiClient({ id }: Props) {
           <h1 className="text-3xl font-bold">{api.name}</h1>
           <p className="text-gray-600">{api.description}</p>
         </div>
-        <Link
-          href="/dashboard/api"
-          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
-        >
-          Retour
-        </Link>
+        <div className="flex gap-4">
+          <Dialog open={showGenerateDialog} onOpenChange={setShowGenerateDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <Wand2 className="h-4 w-4" />
+                Générer des données
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Générer des données fictives</DialogTitle>
+              <DialogDescription>
+                Choisissez le nombre de données à générer pour votre API.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Nombre de données
+                </label>
+                <Input
+                  type="number"
+                  value={count}
+                  onChange={(e) => setCount(parseInt(e.target.value))}
+                  min={1}
+                  max={1000}
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="overwrite"
+                  checked={overwriteData}
+                  onChange={(e) => setOverwriteData(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-[#EA580C] focus:ring-[#EA580C]"
+                />
+                <label htmlFor="overwrite" className="text-sm font-medium">
+                  Écraser les anciennes données
+                </label>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleGenerateData} 
+                disabled={isGenerating}
+              >
+                {isGenerating ? "Génération..." : "Générer"}
+              </Button>
+            </div>
+          </DialogContent>
+          </Dialog>
+          
+          <Link
+            href="/dashboard/api"
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+          >
+            Retour
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -290,6 +399,27 @@ export default function ApiClient({ id }: Props) {
           </Card>
         </div>
       </div>
+
+      <div className="mt-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Fakes data</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[500px] w-full rounded-md border p-4">
+              {api.mockData ? (
+                <pre className="text-sm">
+                  {JSON.stringify(api.mockData, null, 2)}
+                </pre>
+              ) : (
+                <div className="text-center text-gray-500">
+                  Aucune donnée générée. Utilisez le bouton "Générer des données" pour créer des données fictives.
+                </div>
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
-} 
+}

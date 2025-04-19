@@ -2,16 +2,9 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { ApiService } from '@/lib/services/api-service';
 import type { CreateApiInput } from '@/lib/types/api';
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, ApiType } from "@prisma/client";
 
 const prisma = new PrismaClient();
-const ApiType = {
-  SIMPLE: 'SIMPLE',
-  RELATIONAL: 'RELATIONAL',
-  GRAPHQL: 'GRAPHQL'
-} as const;
-
-type ApiType = 'SIMPLE' | 'RELATIONAL' | 'GRAPHQL';
 
 export async function GET() {
   try {
@@ -49,15 +42,19 @@ export async function POST(request: Request) {
     const body = await request.json() as CreateApiInput;
     
     // Validation du type d'API
-    if (!body.type || !Object.values(ApiType).includes(body.type)) {
+    const normalizedType = body.type.toUpperCase();
+    if (!normalizedType || !Object.values(ApiType).includes(normalizedType as ApiType)) {
       return NextResponse.json(
         { error: `Type d'API invalide. Les types valides sont: ${Object.values(ApiType).join(", ")}` },
         { status: 400 }
       );
     }
 
+    // Normalisation du type
+    body.type = normalizedType as ApiType;
+
     // Validation de la structure selon le type
-    if (body.type === "RELATIONAL") {
+    if (body.type === ApiType.RELATIONAL) {
       if (!body.structure?.entities || !Array.isArray(body.structure.entities)) {
         return NextResponse.json(
           { error: "La structure doit contenir un tableau d'entités pour une API relationnelle" },

@@ -39,19 +39,17 @@ model User {
 }
 
 model Api {
-  id          String        @id @default(uuid())
-  name        String        @db.VarChar(100)
+  id          String   @id @default(uuid())
+  name        String
   description String?
   type        ApiType
   structure   Json
-  userId      String
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  endpoints   ApiEndpoint[]
   mockData    Json?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-
-  @@index([userId])
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  endpoints   ApiEndpoint[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model ApiEndpoint {

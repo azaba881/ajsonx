@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Trash2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface Field {
   name: string
@@ -16,6 +17,7 @@ interface Field {
 export default function CreateSimpleApiPage() {
   const router = useRouter()
   const { getToken } = useAuth()
+  const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [apiData, setApiData] = useState({
     name: "",
@@ -38,7 +40,7 @@ export default function CreateSimpleApiPage() {
         body: JSON.stringify({
           name: apiData.name,
           description: apiData.description,
-          type: "SIMPLE",
+          type: "simple",
           structure: {
             fields: apiData.fields.reduce((acc, field) => ({
               ...acc,
@@ -49,15 +51,22 @@ export default function CreateSimpleApiPage() {
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Erreur lors de la création de l'API")
+        throw new Error("Failed to create API")
       }
 
       const data = await response.json()
-      toast.success("API créée avec succès")
-      router.push("/dashboard")
-    } catch (error: any) {
-      toast.error(error.message)
+      toast({
+        title: "API créée avec succès",
+        description: "Votre API simple a été créée avec succès.",
+      })
+      router.push(`/dashboard/api/${data.id}`)
+    } catch (error) {
+      console.error("Error creating API:", error)
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la création de l'API.",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
